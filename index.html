@@ -1,1 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Tracker — Supabase</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  .tab-btn.active { background:#4f46e5; color:#fff; }
+  .kanban-col { min-width: 280px; }
+  .task-card { cursor:pointer; }
+  .task-card:hover { box-shadow: 0 4px 10px rgba(0,0,0,.12); }
+  .modal-backdrop { background: rgba(0,0,0,.5); }
+  .tag-chip { display:inline-flex; align-items:center; gap:4px; background:#eef2ff; color:#4338ca; padding:2px 8px; border-radius:9999px; font-size:12px; }
+  .modaltab-btn.active { border-bottom:2px solid #4f46e5; color:#4f46e5; font-weight:600; }
+  ::-webkit-scrollbar { height:8px; width:8px; }
+  ::-webkit-scrollbar-thumb { background:#c7c7d1; border-radius:4px; }
+</style>
+</head>
+<body class="bg-gray-100 text-gray-800">
 
+<!-- =========================== CONFIG (EDIT ME) =========================== -->
+<script>
+  const SUPABASE_URL = "YOUR_SUPABASE_URL_HERE";
+  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
+</script>
+<!-- ========================================================================= -->
+
+<div id="app" class="max-w-[1600px] mx-auto p-4">
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen" class="max-w-md mx-auto mt-24 bg-white rounded-xl shadow p-8">
+    <h1 class="text-2xl font-bold mb-1">Task Tracker</h1>
+    <p class="text-sm text-gray-500 mb-6">Sign in with your Supabase account</p>
+    <div id="loginError" class="hidden bg-red-50 text-red-700 text-sm p-2 rounded mb-3"></div>
+    <input id="loginEmail" type="email" placeholder="Email" class="w-full border rounded px-3 py-2 mb-3">
+    <input id="loginPassword" type="password" placeholder="Password" class="w-full border rounded px-3 py-2 mb-4">
+    <button onclick="doLogin()" class="w-full bg-indigo-600 text-white rounded py-2 font-medium hover:bg-indigo-700">Sign In</button>
+    <p class="text-xs text-gray-400 mt-4">No account? Ask an admin to onboard you from the Admin Console, or use Supabase's own sign-up flow if enabled.</p>
+  </div>
+
+  <!-- MAIN APP (hidden until authenticated) -->
+  <div id="mainApp" class="hidden">
+
+    <!-- HEADER -->
+    <div class="bg-white rounded-xl shadow p-4 mb-4 flex justify-between items-center flex-wrap gap-3">
+      <div>
+        <h1 class="text-xl font-bold">Task Tracker</h1>
+        <p class="text-xs text-gray-500">Signed in as <span id="currentUserLabel" class="font-medium"></span></p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="exportData()" class="text-sm px-3 py-1.5 rounded border hover:bg-gray-50">⬇ Export JSON</button>
+        <label class="text-sm px-3 py-1.5 rounded border hover:bg-gray-50 cursor-pointer">
+          ⬆ Import JSON
+          <input type="file" accept=".json" class="hidden" onchange="importData(event)">
+        </label>
+        <button onclick="doLogout()" class="text-sm px-3 py-1.5 rounded border hover:bg-gray-50">Sign Out</button>
+      </div>
+    </div>
+
+    <!-- STATS BAR -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+      <div class="bg-white rounded-xl shadow p-4 text-center">
+        <div class="text-2xl font-bold" id="statTotal">0</div>
+        <div class="text-xs text-gray-500">Total Tasks</div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4 text-center">
+        <div class="text-2xl font-bold text-amber-600" id="statInProgress">0</div>
+        <div class="text-xs text-gray-500">In Progress</div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4 text-center">
+        <div class="text-2xl font-bold text-red-600" id="statOverdue">0</div>
+        <div class="text-xs text-gray-500">Overdue</div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4 text-center">
+        <div class="text-2xl font-bold text-indigo-600" id="statHours">0</div>
+        <div class="text-xs text-gray-500">Hours Logged</div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4 text-center">
+        <div class="text-2xl font-bold text-green-600" id="statCompletion">0%</div>
+        <div class="text-xs text-gray-500">Completion</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="bg-white rounded-xl shadow mb-4 p-2 flex gap-2 flex-wrap">
+      <button class="tab-btn active px-4 py-2 rounded-lg text-sm font-medium" data-tab="kanban" onclick="switchMainTab('kanban')">📋 Kanban</button>
+      <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium" data-tab="table" onclick="switchMainTab('table')">📑 Table</button>
+      <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium" data-tab="analytics" onclick="switchMainTab('analytics')">📊 Analytics</button>
+      <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium" data-tab="workload" onclick="switchMainTab('workload')">🧮 Workload</button>
+      <button id="adminTabBtn" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium hidden" data-tab="admin" onclick="switchMainTab('admin')">🛠 Admin</button>
+      <button onclick="openTaskModal()" class="ml-auto px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700">+ New Task</button>
+    </div>
+
+    <!-- FILTER TOOLBAR -->
+    <div class="bg-white rounded-xl shadow p-3 mb-4 flex gap-3 flex-wrap items-center">
+      <input id="searchInput" placeholder="Search title/description..." class="border rounded px-3 py-1.5 text-sm flex-1 min-w-[180px]" oninput="renderAll()">
+      <select id="filterStatus" class="border rounded px-2 py-1.5 text-sm" onchange="renderAll()"><option value="">All Statuses</option></select>
+      <select id="filterPriority" class="border rounded px-2 py-1.5 text-sm" onchange="renderAll()"><option value="">All Priorities</option></select>
+      <select id="filterDepartment" class="border rounded px-2 py-1.5 text-sm" onchange="renderAll()"><option value="">All Departments</option></select>
+      <select id="filterAssignee" class="border rounded px-2 py-1.5 text-sm" onchange="renderAll()"><option value="">All Assignees</option></select>
+    </div>
+
+    <!-- KANBAN VIEW -->
+    <div id="view-kanban" class="tab-view">
+      <div id="kanbanBoard" class="flex gap-4 overflow-x-auto pb-4"></div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div id="view-table" class="tab-view hidden bg-white rounded-xl shadow p-4 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left border-b text-gray-500">
+            <th class="py-2 pr-3">Title</th>
+            <th class="py-2 pr-3">Dept</th>
+            <th class="py-2 pr-3">Status</th>
+            <th class="py-2 pr-3">Priority</th>
+            <th class="py-2 pr-3">Category</th>
+            <th class="py-2 pr-3">Assignee</th>
+            <th class="py-2 pr-3">Start</th>
+            <th class="py-2 pr-3">Due</th>
+            <th class="py-2 pr-3">Tags</th>
+          </tr>
+        </thead>
+        <tbody id="taskTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- ANALYTICS VIEW -->
+    <div id="view-analytics" class="tab-view hidden space-y-4">
+      <div class="bg-white rounded-xl shadow p-4">
+        <div class="flex gap-3 items-end flex-wrap mb-3">
+          <div>
+            <label class="text-xs text-gray-500 block mb-1">Lookback window</label>
+            <select id="waterfallLookback" class="border rounded px-2 py-1.5 text-sm" onchange="renderWaterfall()">
+              <option value="90">Last Quarter (90d)</option>
+              <option value="365" selected>Last Year (365d)</option>
+              <option value="30">Last Month (30d)</option>
+              <option value="custom">Custom range</option>
+            </select>
+          </div>
+          <div id="customRangeWrap" class="hidden flex gap-2">
+            <input type="date" id="customFrom" class="border rounded px-2 py-1.5 text-sm">
+            <input type="date" id="customTo" class="border rounded px-2 py-1.5 text-sm">
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 block mb-1">Bucket size (days)</label>
+            <input type="number" id="waterfallBucket" value="7" min="1" class="border rounded px-2 py-1.5 text-sm w-24">
+          </div>
+          <button onclick="renderWaterfall()" class="px-3 py-1.5 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700">Apply</button>
+        </div>
+        <canvas id="waterfallChart" height="90"></canvas>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-white rounded-xl shadow p-4"><canvas id="deptChart"></canvas></div>
+        <div class="bg-white rounded-xl shadow p-4"><canvas id="statusChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- WORKLOAD (PIVOT) VIEW -->
+    <div id="view-workload" class="tab-view hidden bg-white rounded-xl shadow p-4">
+      <div class="flex gap-3 items-end flex-wrap mb-4">
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">Rows</label>
+          <select id="pivotRows" class="border rounded px-2 py-1.5 text-sm">
+            <option value="assigned_to">Assignee</option>
+            <option value="department">Department</option>
+            <option value="status">Status</option>
+            <option value="category">Category</option>
+            <option value="priority">Priority</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">Columns</label>
+          <select id="pivotCols" class="border rounded px-2 py-1.5 text-sm">
+            <option value="">(none)</option>
+            <option value="status">Status</option>
+            <option value="department">Department</option>
+            <option value="priority">Priority</option>
+            <option value="category">Category</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">Value</label>
+          <select id="pivotValue" class="border rounded px-2 py-1.5 text-sm">
+            <option value="count">Task Count</option>
+            <option value="hours">Sum of Hours Logged</option>
+          </select>
+        </div>
+        <button onclick="renderWorkloadPivot()" class="px-3 py-1.5 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700">Build Pivot</button>
+      </div>
+      <div id="pivotTableWrap" class="overflow-x-auto text-sm"></div>
+    </div>
+
+    <!-- ADMIN VIEW -->
+    <div id="view-admin" class="tab-view hidden space-y-4">
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-white rounded-xl shadow p-4">
+          <h3 class="font-semibold mb-3">Onboard Coworker</h3>
+          <input id="newUserEmail" placeholder="Email" class="w-full border rounded px-3 py-2 mb-2 text-sm">
+          <input id="newUserPassword" placeholder="Temp Password" class="w-full border rounded px-3 py-2 mb-2 text-sm">
+          <input id="newUserUsername" placeholder="Username" class="w-full border rounded px-3 py-2 mb-2 text-sm">
+          <select id="newUserRole" class="w-full border rounded px-3 py-2 mb-2 text-sm"></select>
+          <select id="newUserDept" class="w-full border rounded px-3 py-2 mb-3 text-sm"></select>
+          <button onclick="onboardUser()" class="w-full bg-indigo-600 text-white rounded py-2 text-sm hover:bg-indigo-700">Create User</button>
+          <p class="text-xs text-gray-400 mt-2">Note: creating an Auth user from the browser requires either enabling self-serve signups in Supabase, or wiring this button to a server-side function using the service role key. See dev notes.</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h3 class="font-semibold mb-3">Manage Statuses</h3>
+          <div id="statusManagerList" class="space-y-2 mb-3"></div>
+          <div class="flex gap-2">
+            <input id="newStatusName" placeholder="Status name" class="border rounded px-2 py-1.5 text-sm flex-1">
+            <input id="newStatusColor" type="color" value="#4f46e5" class="border rounded h-9 w-12">
+            <label class="text-xs flex items-center gap-1"><input type="checkbox" id="newStatusComplete"> Complete?</label>
+            <button onclick="addStatus()" class="px-3 py-1.5 text-sm rounded bg-indigo-600 text-white">Add</button>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h3 class="font-semibold mb-3">Manage Priorities</h3>
+          <div id="priorityManagerList" class="space-y-2 mb-3"></div>
+          <div class="flex gap-2">
+            <input id="newPriorityName" placeholder="Priority name" class="border rounded px-2 py-1.5 text-sm flex-1">
+            <input id="newPriorityRank" type="number" placeholder="Rank" class="border rounded px-2 py-1.5 text-sm w-20">
+            <input id="newPriorityColor" type="color" value="#f59e0b" class="border rounded h-9 w-12">
+            <button onclick="addPriority()" class="px-3 py-1.5 text-sm rounded bg-indigo-600 text-white">Add</button>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h3 class="font-semibold mb-3">Manage Categories</h3>
+          <div id="categoryManagerList" class="space-y-2 mb-3"></div>
+          <div class="flex gap-2">
+            <input id="newCategoryName" placeholder="Category name" class="border rounded px-2 py-1.5 text-sm flex-1">
+            <button onclick="addCategory()" class="px-3 py-1.5 text-sm rounded bg-indigo-600 text-white">Add</button>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h3 class="font-semibold mb-3">Manage Departments</h3>
+          <div id="departmentManagerList" class="space-y-2 mb-3"></div>
+          <div class="flex gap-2">
+            <input id="newDepartmentName" placeholder="Department name" class="border rounded px-2 py-1.5 text-sm flex-1">
+            <button onclick="addDepartment()" class="px-3 py-1.5 text-sm rounded bg-indigo-600 text-white">Add</button>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h3 class="font-semibold mb-3">Global Automation Rules</h3>
+          <p class="text-xs text-gray-400 mb-2">(UI mock — not yet functional)</p>
+          <select class="w-full border rounded px-3 py-2 mb-2 text-sm">
+            <option>When status changes to "Done" → notify assignee</option>
+            <option>When due date passes → flag as overdue</option>
+          </select>
+          <button class="w-full bg-gray-300 text-gray-600 rounded py-2 text-sm cursor-not-allowed">Save Rule (disabled)</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div id="taskModal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-40 p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center p-4 border-b">
+      <h2 id="modalTitleText" class="text-lg font-bold">New Task</h2>
+      <button onclick="closeTaskModal()" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+    </div>
+
+    <div class="flex border-b px-4 gap-4 text-sm">
+      <button class="modaltab-btn active py-2" data-mtab="details" onclick="switchModalTab('details')">Details</button>
+      <button class="modaltab-btn py-2" data-mtab="time" onclick="switchModalTab('time')">Time</button>
+      <button class="modaltab-btn py-2" data-mtab="deps" onclick="switchModalTab('deps')">Dependencies</button>
+      <button class="modaltab-btn py-2" data-mtab="history" onclick="switchModalTab('history')">History</button>
+      <button class="modaltab-btn py-2" data-mtab="comments" onclick="switchModalTab('comments')">Comments</button>
+    </div>
+
+    <div class="p-4">
+      <div id="mtab-details" class="mtab space-y-3">
+        <div id="gateNotice" class="hidden text-xs bg-amber-50 text-amber-700 p-2 rounded"></div>
+        <input id="taskTitle" placeholder="Task title" class="w-full border rounded px-3 py-2">
+        <textarea id="taskDescription" placeholder="Description" class="w-full border rounded px-3 py-2" rows="3"></textarea>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="text-xs text-gray-500">Department</label><select id="taskDepartment" class="w-full border rounded px-2 py-1.5"></select></div>
+          <div><label class="text-xs text-gray-500">Status</label><select id="taskStatus" class="w-full border rounded px-2 py-1.5"></select></div>
+          <div><label class="text-xs text-gray-500">Priority</label><select id="taskPriority" class="w-full border rounded px-2 py-1.5"></select></div>
+          <div><label class="text-xs text-gray-500">Category</label><select id="taskCategory" class="w-full border rounded px-2 py-1.5"></select></div>
+          <div><label class="text-xs text-gray-500">Assigned To</label><select id="taskAssignee" class="w-full border rounded px-2 py-1.5"></select></div>
+          <div><label class="text-xs text-gray-500">Estimate (hrs)</label><input id="taskEstimate" type="number" min="0" class="w-full border rounded px-2 py-1.5"></div>
+          <div><label class="text-xs text-gray-500">Start Date</label><input id="taskStartDate" type="date" class="w-full border rounded px-2 py-1.5"></div>
+          <div><label class="text-xs text-gray-500">Due Date</label><input id="taskDueDate" type="date" class="w-full border rounded px-2 py-1.5"></div>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">Tags</label>
+          <div id="tagChips" class="flex flex-wrap gap-1 mb-2"></div>
+          <input id="tagInput" placeholder="Type a tag and press Enter" class="w-full border rounded px-2 py-1.5 text-sm" onkeydown="handleTagInput(event)">
+        </div>
+      </div>
+
+      <div id="mtab-time" class="mtab hidden space-y-3">
+        <div class="flex gap-2">
+          <input id="timeHours" type="number" min="0" step="0.5" placeholder="Hours" class="border rounded px-2 py-1.5 text-sm flex-1">
+          <input id="timeNote" placeholder="What did you work on?" class="border rounded px-2 py-1.5 text-sm flex-[2]">
+          <button onclick="logTime()" class="px-3 py-1.5 text-sm rounded bg-indigo-600 text-white">Log</button>
+        </div>
+        <div class="text-xs text-gray-500"><span id="totalLogged">0</span>h logged / <span id="totalEstimate">0</span>h estimated</div>
+        <div class="w-full bg-gray-200 rounded h-2"><div id="timeProgressBar" class="bg-indigo-600 h-2 rounded" style="width:0%"></div></div>
+        <div id="timeLogsList" class="space-y-1 text-sm"></div>
+      </div>
+
+      <div id="mtab-deps" class="mtab hidden space-y-3">
+        <div><label class="text-xs text-gray-500">Parent Task</label><select id="taskParent" class="w-full border rounded px-2 py-1.5"></select></div>
+        <div><label class="text-xs text-gray-500">Precursor (Predecessor) Task</label><select id="taskPrecursor" class="w-full border rounded px-2 py-1.5"></select></div>
+        <p class="text-xs text-gray-400">Start date is auto-calculated: if both are set, start = MAX(parent.start_date, precursor.due_date + 1 day).</p>
+      </div>
+
+      <div id="mtab-history" class="mtab hidden">
+        <div id="auditTrail" class="space-y-1 text-sm max-h-80 overflow-y-auto"></div>
+      </div>
+
+      <div id="mtab-comments" class="mtab hidden space-y-3">
+        <textarea id="newComment" placeholder="Write a comment..." class="w-full border rounded px-3 py-2 text-sm" rows="2"></textarea>
+        <button onclick="addComment()" class="px-3 py-1.5 text-sm rounded bg-indigo-600 text-white">Post</button>
+        <div id="commentsList" class="space-y-2 text-sm mt-2"></div>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center p-4 border-t">
+      <button id="deleteTaskBtn" onclick="deleteTask()" class="hidden text-red-600 text-sm hover:underline">Delete Task</button>
+      <div class="ml-auto flex gap-2">
+        <button onclick="closeTaskModal()" class="px-4 py-2 text-sm rounded border">Cancel</button>
+        <button id="saveTaskBtn" onclick="saveTask()" class="px-4 py-2 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="hidden fixed bottom-5 right-5 px-4 py-3 rounded-lg shadow-lg text-sm text-white z-50"></div>
+
+<script>
+/* =========================================================================
+   STATE
+========================================================================= */
+const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;   // { id, email }
+let currentProfile = null; // { id, username, role, department }
+let isAdmin = false;
+
+let tasks = [];
+let comments = [];
+let timeLogs = [];
+let history = [];
+let profiles = [];
+let statuses = [];
+let priorities = [];
+let categories = [];
+let departments = [];
+
+let activeTaskId = null; // null = creating new
+let charts = {};
+
+/* =========================================================================
+   AUTH
+========================================================================= */
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errBox = document.getElementById('loginError');
+  errBox.classList.add('hidden');
+  const { data, error } = await supa.auth.signInWithPassword({ email, password });
+  if (error) {
+    errBox.textContent = error.message;
+    errBox.classList.remove('hidden');
+    return;
+  }
+  await onAuthed(data.user);
+}
+
+async function doLogout() {
+  await supa.auth.signOut();
+  location.reload();
+}
+
+async function onAuthed(user) {
+  currentUser = user;
+  const claims = user.app_metadata || {};
+  isAdmin = claims.role === 'admin';
+
+  const { data: profile } = await supa.from('profiles').select('*').eq('id', user.id).single();
+  currentProfile = profile || { id: user.id, username: user.email, role: claims.role, department: claims.department };
+
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  document.getElementById('currentUserLabel').textContent =
+    `${currentProfile.username} (${currentProfile.role || 'member'} / ${currentProfile.department || '—'})`;
+  if (isAdmin) document.getElementById('adminTabBtn').classList.remove('hidden');
+
+  await loadAllData();
+  renderAll();
+}
+
+supa.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session?.user && !currentUser) onAuthed(session.user);
+});
+
+// Attempt to restore an existing session on load
+(async () => {
+  const { data } = await supa.auth.getSession();
+  if (data.session?.user) await onAuthed(data.session.user);
+})();
+
+/* =========================================================================
+   AUTHORIZATION HELPERS (client-side gating — mirrors RLS server-side)
+========================================================================= */
+function canFullyEditTask(task) {
+  if (isAdmin) return true;
+  if (!task) return true; // new task: department chosen by user, allowed to fill in
+  return currentProfile.department === task.department;
+}
+
+/* =========================================================================
+   DATA LOADING
+========================================================================= */
+async function loadAllData() {
+  const [t, c, tl, h, p, st, pr, cat, dep] = await Promise.all([
+    supa.from('tasks').select('*').order('id'),
+    supa.from('comments').select('*').order('created_at'),
+    supa.from('time_logs').select('*').order('logged_at'),
+    supa.from('task_history').select('*').order('changed_at', { ascending: false }),
+    supa.from('profiles').select('*').order('username'),
+    supa.from('statuses').select('*').order('sort_order'),
+    supa.from('priorities').select('*').order('rank'),
+    supa.from('categories').select('*').order('name'),
+    supa.from('departments').select('*').order('name'),
+  ]);
+  tasks = t.data || [];
+  comments = c.data || [];
+  timeLogs = tl.data || [];
+  history = h.data || [];
+  profiles = p.data || [];
+  statuses = st.data || [];
+  priorities = pr.data || [];
+  categories = cat.data || [];
+  departments = dep.data || [];
+
+  populateLookupSelects();
+}
+
+function populateLookupSelects() {
+  const fill = (el, items, valueKey, labelKey, withBlank) => {
+    el.innerHTML = (withBlank ? '<option value="">—</option>' : '') +
+      items.map(i => `<option value="${i[valueKey]}">${i[labelKey]}</option>`).join('');
+  };
+
+  // filter bar
+  fill(document.getElementById('filterStatus'), statuses, 'name', 'name', true);
+  fill(document.getElementById('filterPriority'), priorities, 'name', 'name', true);
+  fill(document.getElementById('filterDepartment'), departments, 'name', 'name', true);
+  fill(document.getElementById('filterAssignee'), profiles, 'id', 'username', true);
+
+  // task modal
+  fill(document.getElementById('taskDepartment'), departments, 'name', 'name', false);
+  fill(document.getElementById('taskStatus'), statuses, 'name', 'name', false);
+  fill(document.getElementById('taskPriority'), priorities, 'name', 'name', false);
+  fill(document.getElementById('taskCategory'), categories, 'name', 'name', true);
+  fill(document.getElementById('taskAssignee'), profiles, 'id', 'username', true);
+  fill(document.getElementById('taskParent'), tasks, 'id', 'title', true);
+  fill(document.getElementById('taskPrecursor'), tasks, 'id', 'title', true);
+
+  // admin
+  fill(document.getElementById('newUserDept'), departments, 'name', 'name', false);
+  const roleSel = document.getElementById('newUserRole');
+  roleSel.innerHTML = '<option value="member">member</option><option value="admin">admin</option>';
+
+  renderAdminLists();
+}
+
+/* =========================================================================
+   MAIN TABS
+========================================================================= */
+function switchMainTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+  document.getElementById('view-' + tab).classList.remove('hidden');
+  if (tab === 'analytics') renderAnalytics();
+  if (tab === 'workload') renderWorkloadPivot();
+}
+
+/* =========================================================================
+   FILTERING
+========================================================================= */
+function getFilteredTasks() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const fStatus = document.getElementById('filterStatus').value;
+  const fPriority = document.getElementById('filterPriority').value;
+  const fDept = document.getElementById('filterDepartment').value;
+  const fAssignee = document.getElementById('filterAssignee').value;
+
+  return tasks.filter(t => {
+    if (q && !(t.title.toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q))) return false;
+    if (fStatus && t.status !== fStatus) return false;
+    if (fPriority && t.priority !== fPriority) return false;
+    if (fDept && t.department !== fDept) return false;
+    if (fAssignee && t.assigned_to !== fAssignee) return false;
+    return true;
+  });
+}
+
+function renderAll() {
+  renderStats();
+  renderKanban();
+  renderTable();
+}
+
+/* =========================================================================
+   STATS
+========================================================================= */
+function renderStats() {
+  const list = getFilteredTasks();
+  const total = list.length;
+  const inProgress = list.filter(t => !t.is_completed && t.status !== statuses[0]?.name).length;
+  const overdue = list.filter(t => !t.is_completed && t.due_date && new Date(t.due_date) < new Date()).length;
+  const hours = timeLogs.filter(l => list.some(t => t.id === l.task_id)).reduce((s, l) => s + Number(l.hours), 0);
+  const completed = list.filter(t => t.is_completed).length;
+  const pct = total ? Math.round((completed / total) * 100) : 0;
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statInProgress').textContent = inProgress;
+  document.getElementById('statOverdue').textContent = overdue;
+  document.getElementById('statHours').textContent = hours.toFixed(1);
+  document.getElementById('statCompletion').textContent = pct + '%';
+}
+
+/* =========================================================================
+   KANBAN
+========================================================================= */
+function renderKanban() {
+  const board = document.getElementById('kanbanBoard');
+  const list = getFilteredTasks();
+  board.innerHTML = statuses.map(s => {
+    const colTasks = list.filter(t => t.status === s.name);
+    return `
+      <div class="kanban-col bg-white rounded-xl shadow flex flex-col">
+        <div class="p-3 border-b flex justify-between items-center" style="border-top:4px solid ${s.color}">
+          <span class="font-semibold text-sm">${s.name}</span>
+          <span class="text-xs bg-gray-100 rounded-full px-2 py-0.5">${colTasks.length}</span>
+        </div>
+        <div class="p-2 space-y-2 flex-1 overflow-y-auto" style="max-height:65vh">
+          ${colTasks.map(t => taskCardHtml(t)).join('') || '<p class="text-xs text-gray-300 text-center py-4">No tasks</p>'}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function taskCardHtml(t) {
+  const pr = priorities.find(p => p.name === t.priority);
+  const assignee = profiles.find(p => p.id === t.assigned_to);
+  const overdue = !t.is_completed && t.due_date && new Date(t.due_date) < new Date();
+  return `
+    <div class="task-card bg-gray-50 border rounded-lg p-3" onclick="openTaskModal(${t.id})">
+      <div class="flex justify-between items-start gap-2">
+        <span class="text-sm font-medium">${escapeHtml(t.title)}</span>
+        ${pr ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full text-white shrink-0" style="background:${pr.color}">${pr.name}</span>` : ''}
+      </div>
+      <div class="text-xs text-gray-500 mt-1">${t.department}${assignee ? ' · ' + assignee.username : ''}</div>
+      <div class="text-xs mt-1 ${overdue ? 'text-red-600 font-medium' : 'text-gray-400'}">Due ${t.due_date}</div>
+      ${(t.tags||[]).length ? `<div class="flex flex-wrap gap-1 mt-2">${t.tags.map(tag=>`<span class="tag-chip">${escapeHtml(tag)}</span>`).join('')}</div>` : ''}
+    </div>`;
+}
+
+/* =========================================================================
+   TABLE VIEW
+========================================================================= */
+function renderTable() {
+  const body = document.getElementById('taskTableBody');
+  const list = getFilteredTasks();
+  body.innerHTML = list.map(t => {
+    const assignee = profiles.find(p => p.id === t.assigned_to);
+    return `
+    <tr class="border-b hover:bg-gray-50 cursor-pointer" onclick="openTaskModal(${t.id})">
+      <td class="py-2 pr-3 font-medium">${escapeHtml(t.title)}</td>
+      <td class="py-2 pr-3">${t.department}</td>
+      <td class="py-2 pr-3">${t.status || ''}</td>
+      <td class="py-2 pr-3">${t.priority || ''}</td>
+      <td class="py-2 pr-3">${t.category || ''}</td>
+      <td class="py-2 pr-3">${assignee ? assignee.username : ''}</td>
+      <td class="py-2 pr-3">${t.start_date}</td>
+      <td class="py-2 pr-3">${t.due_date}</td>
+      <td class="py-2 pr-3">${(t.tags||[]).join(', ')}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* =========================================================================
+   TASK MODAL
+========================================================================= */
+let pendingTags = [];
+
+function openTaskModal(taskId) {
+  activeTaskId = taskId || null;
+  const task = taskId ? tasks.find(t => t.id === taskId) : null;
+  const editable = canFullyEditTask(task);
+
+  document.getElementById('modalTitleText').textContent = task ? 'Edit Task' : 'New Task';
+  document.getElementById('taskTitle').value = task?.title || '';
+  document.getElementById('taskDescription').value = task?.description || '';
+  document.getElementById('taskDepartment').value = task?.department || (departments[0]?.name || '');
+  document.getElementById('taskStatus').value = task?.status || (statuses[0]?.name || '');
+  document.getElementById('taskPriority').value = task?.priority || (priorities[0]?.name || '');
+  document.getElementById('taskCategory').value = task?.category || '';
+  document.getElementById('taskAssignee').value = task?.assigned_to || '';
+  document.getElementById('taskEstimate').value = task?.estimate_hours || 0;
+  document.getElementById('taskStartDate').value = task?.start_date || new Date().toISOString().slice(0,10);
+  document.getElementById('taskDueDate').value = task?.due_date || new Date().toISOString().slice(0,10);
+  document.getElementById('taskParent').value = task?.parent_task_id || '';
+  document.getElementById('taskPrecursor').value = task?.precursor_task_id || '';
+  pendingTags = task?.tags ? [...task.tags] : [];
+  renderTagChips();
+
+  const gate = document.getElementById('gateNotice');
+  const inputs = document.querySelectorAll('#mtab-details input, #mtab-details textarea, #mtab-details select, #mtab-deps select');
+  if (!editable) {
+    gate.textContent = 'You can only view this task and add comments — it belongs to a different department.';
+    gate.classList.remove('hidden');
+    inputs.forEach(i => i.disabled = true);
+    document.getElementById('saveTaskBtn').classList.add('hidden');
+  } else {
+    gate.classList.add('hidden');
+    inputs.forEach(i => i.disabled = false);
+    document.getElementById('saveTaskBtn').classList.remove('hidden');
+  }
+
+  document.getElementById('deleteTaskBtn').classList.toggle('hidden', !(task && isAdmin));
+
+  renderTimeTab(task);
+  renderHistoryTab(task);
+  renderCommentsTab(task);
+
+  switchModalTab('details');
+  document.getElementById('taskModal').classList.remove('hidden');
+}
+
+function closeTaskModal() {
+  document.getElementById('taskModal').classList.add('hidden');
+  activeTaskId = null;
+}
+
+function switchModalTab(tab) {
+  document.querySelectorAll('.modaltab-btn').forEach(b => b.classList.toggle('active', b.dataset.mtab === tab));
+  document.querySelectorAll('.mtab').forEach(v => v.classList.add('hidden'));
+  document.getElementById('mtab-' + tab).classList.remove('hidden');
+}
+
+function renderTagChips() {
+  document.getElementById('tagChips').innerHTML = pendingTags.map((tag, i) =>
+    `<span class="tag-chip">${escapeHtml(tag)} <span class="cursor-pointer" onclick="removeTag(${i})">&times;</span></span>`).join('');
+}
+function handleTagInput(e) {
+  if (e.key === 'Enter' && e.target.value.trim()) {
+    pendingTags.push(e.target.value.trim());
+    e.target.value = '';
+    renderTagChips();
+  }
+}
+function removeTag(i) { pendingTags.splice(i, 1); renderTagChips(); }
+
+async function saveTask() {
+  const payload = {
+    title: document.getElementById('taskTitle').value.trim(),
+    description: document.getElementById('taskDescription').value,
+    department: document.getElementById('taskDepartment').value,
+    status: document.getElementById('taskStatus').value,
+    priority: document.getElementById('taskPriority').value,
+    category: document.getElementById('taskCategory').value || null,
+    assigned_to: document.getElementById('taskAssignee').value || null,
+    estimate_hours: Number(document.getElementById('taskEstimate').value) || 0,
+    start_date: document.getElementById('taskStartDate').value,
+    due_date: document.getElementById('taskDueDate').value,
+    parent_task_id: document.getElementById('taskParent').value || null,
+    precursor_task_id: document.getElementById('taskPrecursor').value || null,
+    tags: pendingTags,
+  };
+  if (!payload.title) return toast('Title is required', 'error');
+
+  // Optimistic UI: reflect immediately, then sync
+  let optimisticId = activeTaskId;
+  if (activeTaskId) {
+    const idx = tasks.findIndex(t => t.id === activeTaskId);
+    tasks[idx] = { ...tasks[idx], ...payload };
+  } else {
+    optimisticId = 'temp-' + Date.now();
+    tasks.push({ id: optimisticId, ...payload, is_completed: false });
+  }
+  renderAll();
+  closeTaskModal();
+
+  try {
+    if (activeTaskId) {
+      const { error } = await supa.from('tasks').update(payload).eq('id', activeTaskId);
+      if (error) throw error;
+    } else {
+      payload.created_by = currentUser.id;
+      const { data, error } = await supa.from('tasks').insert(payload).select().single();
+      if (error) throw error;
+      tasks = tasks.filter(t => t.id !== optimisticId);
+      tasks.push(data);
+    }
+    await loadAllData();
+    renderAll();
+    toast('Task saved');
+  } catch (err) {
+    toast('Save failed: ' + err.message, 'error');
+    await loadAllData();
+    renderAll();
+  }
+}
+
+async function deleteTask() {
+  if (!activeTaskId || !confirm('Delete this task?')) return;
+  const { error } = await supa.from('tasks').delete().eq('id', activeTaskId);
+  if (error) return toast('Delete failed: ' + error.message, 'error');
+  await loadAllData();
+  renderAll();
+  closeTaskModal();
+  toast('Task deleted');
+}
+
+/* =========================================================================
+   TIME TRACKING TAB
+========================================================================= */
+function renderTimeTab(task) {
+  const logs = task ? timeLogs.filter(l => l.task_id === task.id) : [];
+  const total = logs.reduce((s, l) => s + Number(l.hours), 0);
+  const estimate = task?.estimate_hours || 0;
+  document.getElementById('totalLogged').textContent = total.toFixed(1);
+  document.getElementById('totalEstimate').textContent = estimate;
+  document.getElementById('timeProgressBar').style.width = estimate ? Math.min(100, (total/estimate)*100) + '%' : '0%';
+  document.getElementById('timeLogsList').innerHTML = logs.map(l => {
+    const u = profiles.find(p => p.id === l.user_id);
+    return `<div class="border rounded p-2 flex justify-between"><span>${u?.username||'?'}: ${l.hours}h — ${escapeHtml(l.note||'')}</span><span class="text-gray-400 text-xs">${new Date(l.logged_at).toLocaleDateString()}</span></div>`;
+  }).join('') || '<p class="text-xs text-gray-400">No time logged yet.</p>';
+}
+
+async function logTime() {
+  if (!activeTaskId) return toast('Save the task first', 'error');
+  const hours = Number(document.getElementById('timeHours').value);
+  const note = document.getElementById('timeNote').value;
+  if (!hours) return toast('Enter hours', 'error');
+  const { error } = await supa.from('time_logs').insert({ task_id: activeTaskId, user_id: currentUser.id, hours, note });
+  if (error) return toast('Failed: ' + error.message, 'error');
+  document.getElementById('timeHours').value = '';
+  document.getElementById('timeNote').value = '';
+  await loadAllData();
+  renderTimeTab(tasks.find(t => t.id === activeTaskId));
+  renderStats();
+  toast('Time logged');
+}
+
+/* =========================================================================
+   HISTORY TAB
+========================================================================= */
+function renderHistoryTab(task) {
+  const rows = task ? history.filter(h => h.task_id === task.id) : [];
+  document.getElementById('auditTrail').innerHTML = rows.map(h => {
+    const u = profiles.find(p => p.id === h.changed_by);
+    return `<div class="border-b py-1"><span class="font-medium">${h.field_name}</span>: ${escapeHtml(h.old_value||'—')} → ${escapeHtml(h.new_value||'—')} <span class="text-gray-400 text-xs">(${u?.username||'system'}, ${new Date(h.changed_at).toLocaleString()})</span></div>`;
+  }).join('') || '<p class="text-xs text-gray-400">No history yet.</p>';
+}
+
+/* =========================================================================
+   COMMENTS TAB
+========================================================================= */
+function renderCommentsTab(task) {
+  const rows = task ? comments.filter(c => c.task_id === task.id) : [];
+  document.getElementById('commentsList').innerHTML = rows.map(c =>
+    `<div class="border rounded p-2"><span class="font-medium">${escapeHtml(c.username)}</span>: ${escapeHtml(c.text)} <span class="text-gray-400 text-xs block">${new Date(c.created_at).toLocaleString()}</span></div>`
+  ).join('') || '<p class="text-xs text-gray-400">No comments yet.</p>';
+}
+
+async function addComment() {
+  if (!activeTaskId) return toast('Save the task first', 'error');
+  const text = document.getElementById('newComment').value.trim();
+  if (!text) return;
+  const { error } = await supa.from('comments').insert({
+    task_id: activeTaskId, author_id: currentUser.id, username: currentProfile.username, text
+  });
+  if (error) return toast('Failed: ' + error.message, 'error');
+  document.getElementById('newComment').value = '';
+  await loadAllData();
+  renderCommentsTab(tasks.find(t => t.id === activeTaskId));
+  toast('Comment posted');
+}
+
+/* =========================================================================
+   ANALYTICS: waterfall + dept/status charts
+========================================================================= */
+document.getElementById('waterfallLookback').addEventListener('change', (e) => {
+  document.getElementById('customRangeWrap').classList.toggle('hidden', e.target.value !== 'custom');
+});
+
+function renderAnalytics() {
+  renderWaterfall();
+  renderDeptChart();
+  renderStatusChart();
+}
+
+function renderWaterfall() {
+  const lookback = document.getElementById('waterfallLookback').value;
+  const bucketDays = Math.max(1, Number(document.getElementById('waterfallBucket').value) || 7);
+  let from, to;
+  to = new Date();
+  if (lookback === 'custom') {
+    from = new Date(document.getElementById('customFrom').value || Date.now() - 90*86400000);
+    to = new Date(document.getElementById('customTo').value || Date.now());
+  } else {
+    from = new Date(Date.now() - Number(lookback) * 86400000);
+  }
+
+  const buckets = [];
+  let cursor = new Date(from);
+  while (cursor <= to) {
+    const bucketEnd = new Date(Math.min(cursor.getTime() + bucketDays*86400000, to.getTime()+1));
+    buckets.push({ start: new Date(cursor), end: bucketEnd, opens: 0, closes: 0 });
+    cursor = bucketEnd;
+  }
+
+  // opening balance = tasks that started before `from` and not completed before `from`
+  let opening = tasks.filter(t => new Date(t.start_date) < from && !(t.completed_at && new Date(t.completed_at) < from)).length;
+
+  tasks.forEach(t => {
+    const start = new Date(t.start_date);
+    const close = t.completed_at ? new Date(t.completed_at) : null;
+    buckets.forEach(b => {
+      if (start >= b.start && start < b.end) b.opens++;
+      if (close && close >= b.start && close < b.end) b.closes++;
+    });
+  });
+
+  let running = opening;
+  const labels = [], openingArr = [], addArr = [], closeArr = [];
+  buckets.forEach(b => {
+    labels.push(b.start.toLocaleDateString());
+    openingArr.push(running);
+    addArr.push(b.opens);
+    closeArr.push(-b.closes);
+    running += b.opens - b.closes;
+  });
+
+  const ctx = document.getElementById('waterfallChart');
+  if (charts.waterfall) charts.waterfall.destroy();
+  charts.waterfall = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Running Balance', data: openingArr, backgroundColor: '#c7d2fe' },
+        { label: 'New (+)', data: addArr, backgroundColor: '#22c55e' },
+        { label: 'Completed (-)', data: closeArr, backgroundColor: '#ef4444' },
+      ]
+    },
+    options: { responsive: true, scales: { x: { stacked: false } } }
+  });
+}
+
+function renderDeptChart() {
+  const counts = {};
+  tasks.forEach(t => counts[t.department] = (counts[t.department]||0)+1);
+  const ctx = document.getElementById('deptChart');
+  if (charts.dept) charts.dept.destroy();
+  charts.dept = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: Object.keys(counts), datasets: [{ label:'Tasks by Department', data: Object.values(counts), backgroundColor:'#6366f1' }] },
+    options: { plugins: { title: { display:true, text:'Tasks by Department' } } }
+  });
+}
+
+function renderStatusChart() {
+  const counts = {};
+  tasks.forEach(t => counts[t.status] = (counts[t.status]||0)+1);
+  const colors = Object.keys(counts).map(s => statuses.find(x=>x.name===s)?.color || '#999');
+  const ctx = document.getElementById('statusChart');
+  if (charts.status) charts.status.destroy();
+  charts.status = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: Object.keys(counts), datasets: [{ data: Object.values(counts), backgroundColor: colors }] },
+    options: { plugins: { title: { display:true, text:'Tasks by Status' } } }
+  });
+}
+
+/* =========================================================================
+   WORKLOAD PIVOT
+========================================================================= */
+function pivotLabel(dim, value) {
+  if (dim === 'assigned_to') return profiles.find(p => p.id === value)?.username || '(unassigned)';
+  return value || '(none)';
+}
+
+function renderWorkloadPivot() {
+  const rowDim = document.getElementById('pivotRows').value;
+  const colDim = document.getElementById('pivotCols').value;
+  const valueMode = document.getElementById('pivotValue').value;
+
+  const rowKeys = new Set();
+  const colKeys = new Set();
+  const grid = {};
+
+  tasks.forEach(t => {
+    const rKey = t[rowDim];
+    const cKey = colDim ? t[colDim] : '__all__';
+    rowKeys.add(rKey);
+    colKeys.add(cKey);
+    grid[rKey] = grid[rKey] || {};
+    if (valueMode === 'count') {
+      grid[rKey][cKey] = (grid[rKey][cKey] || 0) + 1;
+    } else {
+      const hrs = timeLogs.filter(l => l.task_id === t.id).reduce((s,l)=>s+Number(l.hours),0);
+      grid[rKey][cKey] = (grid[rKey][cKey] || 0) + hrs;
+    }
+  });
+
+  const rows = [...rowKeys];
+  const cols = [...colKeys];
+
+  let html = '<table class="w-full border-collapse"><thead><tr class="bg-gray-50"><th class="border p-2 text-left">' +
+    (rowDim === 'assigned_to' ? 'Assignee' : rowDim) + '</th>';
+  cols.forEach(c => html += `<th class="border p-2">${colDim ? c : 'Total'}</th>`);
+  html += '<th class="border p-2 font-semibold">Row Total</th></tr></thead><tbody>';
+
+  rows.forEach(r => {
+    html += `<tr><td class="border p-2 font-medium">${pivotLabel(rowDim, r)}</td>`;
+    let rowTotal = 0;
+    cols.forEach(c => {
+      const v = (grid[r] && grid[r][c]) || 0;
+      rowTotal += v;
+      html += `<td class="border p-2 text-center">${v ? (valueMode==='hours'? v.toFixed(1): v) : ''}</td>`;
+    });
+    html += `<td class="border p-2 text-center font-semibold">${valueMode==='hours'? rowTotal.toFixed(1): rowTotal}</td></tr>`;
+  });
+
+  // column totals
+  html += '<tr class="bg-gray-50 font-semibold"><td class="border p-2">Column Total</td>';
+  let grandTotal = 0;
+  cols.forEach(c => {
+    let colTotal = 0;
+    rows.forEach(r => colTotal += (grid[r] && grid[r][c]) || 0);
+    grandTotal += colTotal;
+    html += `<td class="border p-2 text-center">${valueMode==='hours'? colTotal.toFixed(1): colTotal}</td>`;
+  });
+  html += `<td class="border p-2 text-center">${valueMode==='hours'? grandTotal.toFixed(1): grandTotal}</td></tr>`;
+  html += '</tbody></table>';
+
+  document.getElementById('pivotTableWrap').innerHTML = html;
+}
+
+/* =========================================================================
+   ADMIN CONSOLE
+========================================================================= */
+function renderAdminLists() {
+  document.getElementById('statusManagerList').innerHTML = statuses.map(s =>
+    `<div class="flex items-center gap-2 text-sm"><span class="w-3 h-3 rounded-full inline-block" style="background:${s.color}"></span>${s.name} ${s.is_complete_status?'<span class="text-xs text-green-600">(complete)</span>':''}</div>`
+  ).join('');
+  document.getElementById('priorityManagerList').innerHTML = priorities.map(p =>
+    `<div class="flex items-center gap-2 text-sm"><span class="w-3 h-3 rounded-full inline-block" style="background:${p.color}"></span>${p.name} (rank ${p.rank})</div>`
+  ).join('');
+  document.getElementById('categoryManagerList').innerHTML = categories.map(c => `<div class="text-sm">${c.name}</div>`).join('');
+  document.getElementById('departmentManagerList').innerHTML = departments.map(d => `<div class="text-sm">${d.name}</div>`).join('');
+}
+
+async function addStatus() {
+  const name = document.getElementById('newStatusName').value.trim();
+  if (!name) return;
+  const color = document.getElementById('newStatusColor').value;
+  const is_complete_status = document.getElementById('newStatusComplete').checked;
+  const { error } = await supa.from('statuses').insert({ name, color, is_complete_status, sort_order: statuses.length });
+  if (error) return toast(error.message, 'error');
+  document.getElementById('newStatusName').value = '';
+  await loadAllData();
+  toast('Status added');
+}
+
+async function addPriority() {
+  const name = document.getElementById('newPriorityName').value.trim();
+  if (!name) return;
+  const rank = Number(document.getElementById('newPriorityRank').value) || 0;
+  const color = document.getElementById('newPriorityColor').value;
+  const { error } = await supa.from('priorities').insert({ name, rank, color });
+  if (error) return toast(error.message, 'error');
+  document.getElementById('newPriorityName').value = '';
+  await loadAllData();
+  toast('Priority added');
+}
+
+async function addCategory() {
+  const name = document.getElementById('newCategoryName').value.trim();
+  if (!name) return;
+  const { error } = await supa.from('categories').insert({ name });
+  if (error) return toast(error.message, 'error');
+  document.getElementById('newCategoryName').value = '';
+  await loadAllData();
+  toast('Category added');
+}
+
+async function addDepartment() {
+  const name = document.getElementById('newDepartmentName').value.trim();
+  if (!name) return;
+  const { error } = await supa.from('departments').insert({ name });
+  if (error) return toast(error.message, 'error');
+  document.getElementById('newDepartmentName').value = '';
+  await loadAllData();
+  toast('Department added');
+}
+
+async function onboardUser() {
+  // NOTE: supabase-js client-side signUp cannot set another user's password
+  // as an admin, and cannot set app_metadata directly (that requires the
+  // service role key server-side). This performs a best-effort signUp;
+  // for full admin-provisioning wire this button to a Supabase Edge
+  // Function using the service role key. See dev notes in README.
+  const email = document.getElementById('newUserEmail').value.trim();
+  const password = document.getElementById('newUserPassword').value;
+  const username = document.getElementById('newUserUsername').value.trim();
+  const role = document.getElementById('newUserRole').value;
+  const department = document.getElementById('newUserDept').value;
+  if (!email || !password || !username) return toast('Fill all fields', 'error');
+
+  const { data, error } = await supa.auth.signUp({ email, password });
+  if (error) return toast(error.message, 'error');
+
+  const uid = data.user?.id;
+  if (uid) {
+    await supa.from('profiles').insert({ id: uid, username, role, department });
+    await supa.rpc('admin_sync_profile_claims', { target_user: uid });
+  }
+  toast('User created (they must confirm email if confirmation is enabled)');
+}
+
+/* =========================================================================
+   EXPORT / IMPORT
+========================================================================= */
+function exportData() {
+  const blob = new Blob([JSON.stringify({ tasks, comments, timeLogs, history }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `task-tracker-export-${Date.now()}.json`;
+  a.click();
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!isAdmin) return toast('Only admins can import data', 'error');
+      if (data.tasks?.length) {
+        for (const t of data.tasks) {
+          const { id, ...rest } = t;
+          await supa.from('tasks').insert(rest);
+        }
+      }
+      await loadAllData();
+      renderAll();
+      toast('Import complete');
+    } catch (err) {
+      toast('Invalid file: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* =========================================================================
+   UTIL
+========================================================================= */
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+let toastTimer;
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `fixed bottom-5 right-5 px-4 py-3 rounded-lg shadow-lg text-sm text-white z-50 ${type==='error'?'bg-red-600':'bg-gray-800'}`;
+  el.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add('hidden'), 3000);
+}
+</script>
+</body>
+</html>
