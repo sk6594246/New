@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stratega PM — Project Management</title>
+<style>
+/* ============================================
+   STRATEGA PM — Material Glass Design System
+   ============================================ */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-hover: rgba(255, 255, 255, 0.14);
+  --glass-active: rgba(255, 255, 255, 0.20);
+  --text-primary: #e8ecf1;
+  --text-secondary: #9aa5b8;
+  --text-muted: #6b7a8f;
+  --accent-blue: #4fc3f7;
+  --accent-blue-dark: #29b6f6;
+  --accent-green: #66bb6a;
+  --accent-orange: #ffa726;
+  --accent-red: #ef5350;
+  --accent-purple: #ab47bc;
+  --accent-teal: #26a69a;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.15);
+  --shadow-md: 0 8px 32px rgba(0,0,0,0.25);
+  --shadow-lg: 0 16px 48px rgba(0,0,0,0.35);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --sidebar-width: 260px;
+  --header-height: 64px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0f172a;
+  background-image: 
+    radial-gradient(ellipse at 10% 20%, rgba(79,195,247,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 80%, rgba(171,71,188,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(15,23,42,1) 0%, rgba(8,12,24,1) 100%);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+/* Glass Components */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+}
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: var(--transition);
+}
+.glass-card:hover {
+  background: var(--glass-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.glass-input {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 14px;
+  width: 100%;
+  transition: var(--transition);
+  outline: none;
+}
+.glass-input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(79,195,247,0.15);
+}
+.glass-input::placeholder { color: var(--text-muted); }
+.glass-btn {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 20px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.glass-btn:hover { background: var(--glass-hover); transform: translateY(-1px); }
+.glass-btn:active { transform: translateY(0); }
+.glass-btn.primary {
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark));
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(79,195,247,0.3);
+}
+.glass-btn.primary:hover { box-shadow: 0 6px 24px rgba(79,195,247,0.4); }
+.glass-btn.danger { background: linear-gradient(135deg, var(--accent-red), #d32f2f); border-color: transparent; }
+.glass-btn.success { background: linear-gradient(135deg, var(--accent-green), #388e3c); border-color: transparent; }
+
+/* Layout */
+.app-shell { display: flex; height: 100vh; width: 100vw; }
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(30px);
+  border-right: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 16px;
+  z-index: 100;
+}
+.brand {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 8px 24px;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 16px;
+}
+.brand-icon {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 700;
+  color: white;
+  box-shadow: 0 4px 12px rgba(79,195,247,0.3);
+}
+.brand-text { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+.brand-sub { font-size: 11px; color: var(--text-muted); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+.nav-section { margin-bottom: 8px; }
+.nav-label {
+  font-size: 10px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 12px 8px 8px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 2px;
+  font-size: 14px; color: var(--text-secondary);
+  position: relative;
+  overflow: hidden;
+}
+.nav-item::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: var(--accent-blue);
+  border-radius: 0 4px 4px 0;
+  transform: scaleY(0);
+  transition: var(--transition);
+}
+.nav-item:hover { background: var(--glass-hover); color: var(--text-primary); }
+.nav-item.active { background: var(--glass-active); color: var(--accent-blue); }
+.nav-item.active::before { transform: scaleY(1); }
+.nav-icon { width: 20px; text-align: center; font-size: 16px; }
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--glass-border);
+}
+.user-pill {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+}
+.user-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: white;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role { font-size: 11px; color: var(--text-muted); }
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+.top-bar {
+  height: var(--header-height);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(20px);
+  z-index: 50;
+}
+.page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+.top-actions { display: flex; align-items: center; gap: 12px; }
+.project-selector {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+}
+.content-area { flex: 1; overflow: auto; padding: 24px 28px; }
+.view { display: none; animation: fadeIn 0.3s ease; }
+.view.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Login Screen */
+.login-screen {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #0f172a;
+  background-image: 
+    radial-gradient(ellipse at 20% 30%, rgba(79,195,247,0.1) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 70%, rgba(171,71,188,0.08) 0%, transparent 60%);
+  z-index: 1000;
+}
+.login-card { width: 420px; padding: 48px; text-align: center; }
+.pin-dots { display: flex; gap: 12px; justify-content: center; margin: 24px 0; }
+.pin-dot {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--glass-border);
+  transition: var(--transition);
+}
+.pin-dot.filled { background: var(--accent-blue); border-color: var(--accent-blue); box-shadow: 0 0 12px rgba(79,195,247,0.5); }
+.pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
+.pin-key {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 600;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-primary);
+  user-select: none;
+}
+.pin-key:hover { background: var(--glass-hover); transform: scale(1.05); }
+.pin-key:active { transform: scale(0.95); }
+.login-error { color: var(--accent-red); font-size: 13px; margin-top: 12px; min-height: 20px; }
+
+/* Dashboard */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card { padding: 20px; position: relative; overflow: hidden; }
+.stat-card::after {
+  content: ''; position: absolute; top: 0; right: 0;
+  width: 80px; height: 80px;
+  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+  border-radius: 50%; transform: translate(30%, -30%);
+}
+.stat-value { font-size: 32px; font-weight: 700; margin: 8px 0 4px; letter-spacing: -1px; }
+.stat-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+.stat-change { font-size: 12px; font-weight: 600; margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; }
+.stat-change.positive { color: var(--accent-green); }
+.stat-change.negative { color: var(--accent-red); }
+.dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+.dashboard-panel { min-height: 300px; }
+.panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.panel-title { font-size: 16px; font-weight: 600; }
+.activity-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--glass-border); }
+.activity-item:last-child { border-bottom: none; }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.activity-content { flex: 1; }
+.activity-text { font-size: 13px; line-height: 1.5; }
+.activity-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* Kanban */
+.kanban-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.kanban-filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filter-chip {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.filter-chip:hover { background: var(--glass-hover); }
+.filter-chip.active { background: rgba(79,195,247,0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
+.kanban-board { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; min-height: calc(100vh - 220px); }
+.kanban-column { min-width: 300px; max-width: 340px; flex: 1; display: flex; flex-direction: column; }
+.column-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--glass-border);
+  border-bottom: none;
+}
+.column-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.column-badge {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 12px; font-weight: 600;
+  min-width: 24px; text-align: center;
+}
+.column-body {
+  flex: 1;
+  background: rgba(0,0,0,0.15);
+  border: 1px solid var(--glass-border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  padding: 12px;
+  overflow-y: auto;
+  min-height: 200px;
+}
+.kanban-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: grab;
+  transition: var(--transition);
+  position: relative;
+}
+.kanban-card:hover { background: var(--glass-hover); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.kanban-card.dragging { opacity: 0.5; transform: rotate(3deg); }
+.card-priority-bar { height: 3px; border-radius: 2px; margin-bottom: 10px; }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.card-title { font-size: 14px; font-weight: 600; line-height: 1.4; flex: 1; }
+.card-actions { display: flex; gap: 4px; opacity: 0; transition: var(--transition); }
+.kanban-card:hover .card-actions { opacity: 1; }
+.card-action-btn {
+  width: 26px; height: 26px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  transition: var(--transition);
+}
+.card-action-btn:hover { background: rgba(255,255,255,0.2); color: var(--text-primary); }
+.card-meta { display: flex; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+.card-meta-item { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-muted); }
+.card-assignee {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: white;
+  margin-left: auto;
+}
+.card-dates { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+.card-comments-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--text-muted); }
+.status-cycle-btn {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  transition: var(--transition);
+  margin-left: 4px;
+}
+.status-cycle-btn:hover { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+.drop-zone { min-height: 60px; border-radius: var(--radius-sm); border: 2px dashed transparent; transition: var(--transition); }
+.drop-zone.drag-over { border-color: var(--accent-blue); background: rgba(79,195,247,0.05); }
+
+/* Gantt */
+.gantt-container { overflow: auto; background: rgba(0,0,0,0.15); border-radius: var(--radius-md); border: 1px solid var(--glass-border); padding: 20px; min-height: 500px; }
+.gantt-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.gantt-chart { position: relative; min-width: 800px; }
+.gantt-header { display: flex; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; margin-bottom: 8px; }
+.gantt-task-label { width: 200px; flex-shrink: 0; font-size: 12px; font-weight: 600; color: var(--text-secondary); padding: 0 8px; }
+.gantt-timeline-header { flex: 1; display: flex; position: relative; }
+.gantt-day-header { flex: 1; text-align: center; font-size: 11px; color: var(--text-muted); border-right: 1px solid rgba(255,255,255,0.05); padding: 4px 0; min-width: 30px; }
+.gantt-day-header.weekend { color: var(--accent-red); opacity: 0.6; }
+.gantt-day-header.today { background: rgba(79,195,247,0.1); color: var(--accent-blue); font-weight: 600; }
+.gantt-row { display: flex; align-items: center; height: 40px; border-bottom: 1px solid rgba(255,255,255,0.05); position: relative; }
+.gantt-row:hover { background: rgba(255,255,255,0.03); }
+.gantt-task-name { width: 200px; flex-shrink: 0; padding: 0 8px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gantt-timeline { flex: 1; position: relative; height: 100%; }
+.gantt-bar {
+  position: absolute; height: 24px; top: 8px;
+  border-radius: 4px; cursor: pointer; transition: var(--transition);
+  display: flex; align-items: center; padding: 0 8px;
+  font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden;
+}
+.gantt-bar:hover { filter: brightness(1.2); z-index: 10; }
+.gantt-bar.planned { background: linear-gradient(90deg, var(--accent-blue), var(--accent-blue-dark)); opacity: 0.7; }
+.gantt-bar.actual { background: linear-gradient(90deg, var(--accent-green), #388e3c); }
+.gantt-bar.baseline1 { background: repeating-linear-gradient(45deg, var(--accent-orange), var(--accent-orange) 4px, transparent 4px, transparent 8px); opacity: 0.5; height: 12px; top: 4px; }
+.gantt-bar.baseline2 { background: repeating-linear-gradient(-45deg, var(--accent-purple), var(--accent-purple) 4px, transparent 4px, transparent 8px); opacity: 0.5; height: 12px; top: 20px; }
+.gantt-gridline { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,0.05); pointer-events: none; }
+.gantt-gridline.week { background: rgba(255,255,255,0.1); }
+.gantt-gridline.month { background: rgba(255,255,255,0.15); width: 2px; }
+.gantt-today-line { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent-red); z-index: 5; pointer-events: none; }
+.gantt-today-label { position: absolute; top: -20px; background: var(--accent-red); color: white; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; transform: translateX(-50%); }
+
+/* Team */
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.team-card { padding: 20px; display: flex; align-items: flex-start; gap: 16px; position: relative; }
+.team-avatar {
+  width: 56px; height: 56px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 700; color: white;
+  flex-shrink: 0;
+}
+.team-info { flex: 1; min-width: 0; }
+.team-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.team-role { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.team-role.admin { background: rgba(239,83,80,0.15); color: var(--accent-red); }
+.team-role.manager { background: rgba(255,167,38,0.15); color: var(--accent-orange); }
+.team-role.user { background: rgba(79,195,247,0.15); color: var(--accent-blue); }
+.team-depts { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.team-projects { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.team-card-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px; opacity: 0; transition: var(--transition); }
+.team-card:hover .team-card-actions { opacity: 1; }
+
+/* Analytics */
+.analytics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.chart-container { padding: 20px; min-height: 300px; }
+.chart-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 200px; padding-bottom: 24px; position: relative; }
+.bar-chart-y-axis { position: absolute; left: 0; top: 0; bottom: 24px; width: 30px; display: flex; flex-direction: column; justify-content: space-between; font-size: 10px; color: var(--text-muted); text-align: right; padding-right: 4px; }
+.bar-chart-bars { display: flex; align-items: flex-end; gap: 6px; margin-left: 36px; height: 100%; flex: 1; }
+.bar-chart-bar { flex: 1; background: linear-gradient(to top, var(--accent-blue), var(--accent-blue-dark)); border-radius: 4px 4px 0 0; min-width: 20px; position: relative; transition: var(--transition); cursor: pointer; }
+.bar-chart-bar:hover { filter: brightness(1.2); }
+.bar-chart-label { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+.heatmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.heatmap-cell { aspect-ratio: 1; border-radius: 3px; transition: var(--transition); cursor: pointer; }
+.heatmap-cell:hover { transform: scale(1.1); z-index: 2; }
+.heatmap-legend { display: flex; align-items: center; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+.heatmap-legend-label { font-size: 11px; color: var(--text-muted); }
+
+/* Manage */
+.manage-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; }
+.manage-tab { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; transition: var(--transition); color: var(--text-secondary); border: none; background: none; }
+.manage-tab:hover { color: var(--text-primary); background: var(--glass-hover); }
+.manage-tab.active { color: var(--accent-blue); background: rgba(79,195,247,0.1); }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th, .data-table td { padding: 12px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--glass-border); }
+.data-table th { font-weight: 600; color: var(--text-secondary); text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+.data-table tr:hover { background: rgba(255,255,255,0.03); }
+.data-table .actions { display: flex; gap: 6px; }
+.table-action { width: 28px; height: 28px; border-radius: var(--radius-sm); border: none; background: rgba(255,255,255,0.05); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: var(--transition); }
+.table-action:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+.table-action.delete:hover { background: var(--accent-red); color: white; }
+.color-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+.color-option { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: var(--transition); }
+.color-option:hover { transform: scale(1.2); }
+.color-option.selected { border-color: white; box-shadow: 0 0 0 2px var(--accent-blue); }
+
+/* Modals */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: #1a2332; border: 1px solid var(--glass-border); border-radius: var(--radius-xl); width: 100%; max-width: 600px; max-height: 90vh; overflow: auto; transform: translateY(20px) scale(0.95); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: var(--shadow-lg); }
+.modal-overlay.open .modal { transform: translateY(0) scale(1); }
+.modal-header { padding: 24px 28px 0; display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: 20px; font-weight: 700; }
+.modal-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(255,255,255,0.05); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: var(--transition); }
+.modal-close:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+.modal-body { padding: 20px 28px; }
+.modal-footer { padding: 16px 28px 24px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--glass-border); margin-top: 8px; }
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-select { background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text-primary); font-size: 14px; width: 100%; outline: none; cursor: pointer; }
+.form-select:focus { border-color: var(--accent-blue); }
+.form-textarea { min-height: 100px; resize: vertical; }
+.comments-section { border-top: 1px solid var(--glass-border); margin-top: 20px; padding-top: 16px; }
+.comments-list { max-height: 200px; overflow-y: auto; margin-bottom: 12px; }
+.comment-item { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.comment-author { font-size: 12px; font-weight: 600; }
+.comment-time { font-size: 11px; color: var(--text-muted); }
+.comment-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.comment-input-row { display: flex; gap: 8px; }
+.comment-input-row .glass-input { flex: 1; }
+.audit-trail { border-top: 1px solid var(--glass-border); margin-top: 16px; padding-top: 16px; }
+.audit-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.audit-action { font-weight: 600; color: var(--accent-blue); }
+.audit-time { color: var(--text-muted); margin-left: auto; }
+
+/* Mobile */
+@media (max-width: 1024px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .analytics-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: transform 0.3s ease; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: flex !important; position: fixed; top: 16px; left: 16px; z-index: 200; width: 40px; height: 40px; border-radius: 50%; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-primary); align-items: center; justify-content: center; font-size: 18px; cursor: pointer; backdrop-filter: blur(10px); }
+  .top-bar { padding-left: 60px; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .kanban-board { flex-direction: column; }
+  .kanban-column { max-width: 100%; min-width: 100%; }
+  .team-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .gantt-container { padding: 12px; }
+}
+.sidebar-toggle { display: none; }
+.mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; display: none; }
+.mobile-overlay.show { display: block; }
+
+/* Toasts */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+.toast { background: #1a2332; border: 1px solid var(--glass-border); border-radius: var(--radius-md); padding: 14px 20px; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-md); animation: slideIn 0.3s ease; min-width: 280px; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.toast.success { border-left: 3px solid var(--accent-green); }
+.toast.error { border-left: 3px solid var(--accent-red); }
+.toast.info { border-left: 3px solid var(--accent-blue); }
+
+/* Loading */
+.loading-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 3000; flex-direction: column; gap: 16px; }
+.spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: var(--text-secondary); }
+
+/* Empty States */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+.empty-state-title { font-size: 18px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+.empty-state-desc { font-size: 14px; }
+
+/* Badges */
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.badge.priority-high { background: rgba(239,83,80,0.15); color: var(--accent-red); }
+.badge.priority-medium { background: rgba(255,167,38,0.15); color: var(--accent-orange); }
+.badge.priority-low { background: rgba(102,187,106,0.15); color: var(--accent-green); }
+
+/* Toggle */
+.toggle { appearance: none; width: 40px; height: 22px; background: rgba(255,255,255,0.1); border-radius: 11px; position: relative; cursor: pointer; outline: none; transition: var(--transition); }
+.toggle::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white; top: 2px; left: 2px; transition: var(--transition); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.toggle:checked { background: var(--accent-blue); }
+.toggle:checked::after { left: 20px; }
+
+/* Sync */
+.sync-indicator { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); }
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* Config */
+.config-panel { max-width: 700px; }
+.config-section { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--glass-border); }
+.config-section:last-child { border-bottom: none; }
+.config-section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+.config-field { margin-bottom: 16px; }
+.config-field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+.config-field .hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.setup-step { display: flex; gap: 16px; margin-bottom: 24px; padding: 20px; border-radius: var(--radius-md); background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); }
+.setup-step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.setup-step-content { flex: 1; }
+.setup-step-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.setup-step-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px; }
+.code-block { background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 12px; font-family: monospace; font-size: 12px; color: var(--accent-green); overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+
+/* Telemetry */
+.telemetry-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.telemetry-card { padding: 16px; text-align: center; }
+.telemetry-value { font-size: 28px; font-weight: 700; margin: 8px 0; }
+.telemetry-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.telemetry-trend { font-size: 11px; font-weight: 600; margin-top: 6px; }
+
+/* Print */
+@media print { .sidebar, .top-bar, .kanban-toolbar, .gantt-toolbar { display: none !important; } .gantt-container { overflow: visible; border: none; } body { background: white; color: black; } }
+</style>
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%234fc3f7'/%3E%3Ctext x='50' y='68' font-size='55' font-weight='700' text-anchor='middle' fill='white' font-family='Arial'%3ES%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="favicon.png">
+<meta name="theme-color" content="#0f172a">
+<!-- Build-time secret injection placeholder -->
+<meta name="stratega-webapp-url" content="https://script.google.com/macros/s/AKfycbxogmhlhKYmW9lVWXML_CGWgbm7RTHw97WVQURldnwNcKD7vTjj6hYlUwLg6SVf0VVwWQ/exec">
+<base target="_blank">
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display:none;">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading Stratega PM...</div>
+</div>
+
+<!-- Login Screen -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-card glass-card">
+    <div class="brand" style="justify-content:center;border:none;margin-bottom:32px;">
+      <div class="brand-icon">S</div>
+      <div>
+        <div class="brand-text">Stratega PM</div>
+        <div class="brand-sub">Project Management</div>
+      </div>
+    </div>
+    <div style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;">Enter your PIN</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <div class="pin-pad" id="pinPad">
+      <button class="pin-key" data-key="1">1</button>
+      <button class="pin-key" data-key="2">2</button>
+      <button class="pin-key" data-key="3">3</button>
+      <button class="pin-key" data-key="4">4</button>
+      <button class="pin-key" data-key="5">5</button>
+      <button class="pin-key" data-key="6">6</button>
+      <button class="pin-key" data-key="7">7</button>
+      <button class="pin-key" data-key="8">8</button>
+      <button class="pin-key" data-key="9">9</button>
+      <button class="pin-key" style="visibility:hidden;"></button>
+      <button class="pin-key" data-key="0">0</button>
+      <button class="pin-key" data-key="backspace">&#x232B;</button>
+    </div>
+    <div style="margin-top:24px;font-size:12px;color:var(--text-muted);">
+      Default PIN: <strong style="color:var(--accent-blue);">1234</strong> (System Admin)
+    </div>
+  </div>
+</div>
+
+<!-- App Shell -->
+<div id="appShell" class="app-shell" style="display:none;">
+  <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">&#x2630;</button>
+  <div class="mobile-overlay" id="mobileOverlay" onclick="toggleSidebar()"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-icon">S</div>
+      <div><div class="brand-text">Stratega</div><div class="brand-sub">Project Management</div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" data-view="dashboard" onclick="navigateTo('dashboard')"><span class="nav-icon">&#x1F4CA;</span> Dashboard</div>
+      <div class="nav-item" data-view="kanban" onclick="navigateTo('kanban')"><span class="nav-icon">&#x1F4DD;</span> Kanban Board</div>
+      <div class="nav-item" data-view="gantt" onclick="navigateTo('gantt')"><span class="nav-icon">&#x1F4C5;</span> Gantt Chart</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Team & Analytics</div>
+      <div class="nav-item" data-view="team" onclick="navigateTo('team')"><span class="nav-icon">&#x1F465;</span> Team Directory</div>
+      <div class="nav-item" data-view="analytics" onclick="navigateTo('analytics')"><span class="nav-icon">&#x1F4C8;</span> Analytics</div>
+    </div>
+    <div class="nav-section" id="adminNavSection" style="display:none;">
+      <div class="nav-label">Administration</div>
+      <div class="nav-item" data-view="manage" onclick="navigateTo('manage')"><span class="nav-icon">&#x2699;&#xFE0F;</span> Manage</div>
+      <div class="nav-item" data-view="config" onclick="navigateTo('config')"><span class="nav-icon">&#x1F527;</span> Configuration</div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userAvatar">SA</div>
+        <div class="user-info"><div class="user-name" id="userName">System Admin</div><div class="user-role" id="userRole">Admin</div></div>
+        <button class="card-action-btn" onclick="logout()" title="Logout">&#x21AA;</button>
+      </div>
+      <div class="sync-indicator" style="margin-top:10px;justify-content:center;">
+        <div class="sync-dot" id="syncDot"></div>
+        <span id="syncStatus">Local Mode</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-bar">
+      <div class="page-title" id="pageTitle">Dashboard</div>
+      <div class="top-actions">
+        <select class="project-selector" id="projectSelector" onchange="switchProject(this.value)"><option value="all">All Projects</option></select>
+        <button class="glass-btn primary" id="newTaskBtn" onclick="openTaskModal()"><span>+</span> New Task</button>
+      </div>
+    </header>
+    <div class="content-area" id="contentArea">
+
+      <!-- DASHBOARD -->
+      <div class="view active" id="view-dashboard">
+        <div class="stats-grid" id="statsGrid">
+          <div class="glass-card stat-card">
+            <div class="stat-label">Total Tasks</div><div class="stat-value" id="statTotalTasks">0</div>
+            <div class="stat-change positive">&#x2191; Active</div>
+          </div>
+          <div class="glass-card stat-card">
+            <div class="stat-label">In Progress</div><div class="stat-value" id="statInProgress">0</div>
+            <div class="stat-change" style="color:var(--accent-orange);">&#x2192; Working</div>
+          </div>
+          <div class="glass-card stat-card">
+            <div class="stat-label">Completed</div><div class="stat-value" id="statCompleted">0</div>
+            <div class="stat-change positive">&#x2713; Done</div>
+          </div>
+          <div class="glass-card stat-card">
+            <div class="stat-label">At Risk</div><div class="stat-value" id="statAtRisk">0</div>
+            <div class="stat-change negative">&#x26A0; Attention</div>
+          </div>
+        </div>
+        <div class="dashboard-grid">
+          <div class="glass-card dashboard-panel">
+            <div class="panel-header"><div class="panel-title">&#x1F4C8; Throughput Velocity</div></div>
+            <div class="bar-chart" id="velocityChart"></div>
+          </div>
+          <div class="glass-card dashboard-panel">
+            <div class="panel-header"><div class="panel-title">&#x1F514; Recent Activity</div></div>
+            <div id="activityFeed"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;">
+          <div class="glass-card dashboard-panel">
+            <div class="panel-header"><div class="panel-title">&#x1F525; Workload Heatmap</div></div>
+            <div class="heatmap-grid" id="workloadHeatmap"></div>
+            <div class="heatmap-legend">
+              <span class="heatmap-legend-label">Low</span>
+              <div class="heatmap-cell" style="width:16px;height:16px;background:rgba(79,195,247,0.2);"></div>
+              <div class="heatmap-cell" style="width:16px;height:16px;background:rgba(79,195,247,0.4);"></div>
+              <div class="heatmap-cell" style="width:16px;height:16px;background:rgba(79,195,247,0.6);"></div>
+              <div class="heatmap-cell" style="width:16px;height:16px;background:rgba(79,195,247,0.8);"></div>
+              <div class="heatmap-cell" style="width:16px;height:16px;background:rgba(79,195,247,1);"></div>
+              <span class="heatmap-legend-label">High</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KANBAN -->
+      <div class="view" id="view-kanban">
+        <div class="kanban-toolbar">
+          <div class="kanban-filters">
+            <div class="filter-chip active" id="filterAll" onclick="setKanbanFilter('all')">All</div>
+            <div class="filter-chip" id="filterHigh" onclick="setKanbanFilter('high')">&#x1F534; High Priority</div>
+            <div class="filter-chip" id="filterMedium" onclick="setKanbanFilter('medium')">&#x1F7E1; Medium Priority</div>
+            <div class="filter-chip" id="filterLow" onclick="setKanbanFilter('low')">&#x1F7E2; Low Priority</div>
+            <div class="filter-chip" id="filterMine" onclick="toggleMyTasks()">&#x1F464; Assigned to Me</div>
+          </div>
+          <div class="sync-indicator"><div class="sync-dot"></div><span>Auto-sync</span></div>
+        </div>
+        <div class="kanban-board" id="kanbanBoard"></div>
+      </div>
+
+      <!-- GANTT -->
+      <div class="view" id="view-gantt">
+        <div class="gantt-toolbar">
+          <select class="project-selector" id="ganttProjectFilter" onchange="renderGantt()"><option value="all">All Projects</option></select>
+          <select class="project-selector" id="ganttDeptFilter" onchange="renderGantt()"><option value="all">All Departments</option></select>
+          <button class="glass-btn" onclick="zoomGantt('day')">Day</button>
+          <button class="glass-btn" onclick="zoomGantt('week')">Week</button>
+          <button class="glass-btn" onclick="zoomGantt('month')">Month</button>
+          <button class="glass-btn" onclick="window.print()">&#x1F5A8; Print</button>
+        </div>
+        <div class="gantt-container" id="ganttContainer"></div>
+      </div>
+
+      <!-- TEAM -->
+      <div class="view" id="view-team">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <div class="page-title">Team Directory</div>
+          <button class="glass-btn primary" id="addUserBtn" onclick="openUserModal()" style="display:none;"><span>+</span> Add User</button>
+        </div>
+        <div class="team-grid" id="teamGrid"></div>
+      </div>
+
+      <!-- ANALYTICS -->
+      <div class="view" id="view-analytics">
+        <div class="analytics-grid">
+          <div class="glass-card chart-container">
+            <div class="chart-title">&#x1F4CA; Tasks by Status</div><div id="statusChart"></div>
+          </div>
+          <div class="glass-card chart-container">
+            <div class="chart-title">&#x26A1; Bottleneck Analysis</div><div id="bottleneckChart"></div>
+          </div>
+          <div class="glass-card chart-container">
+            <div class="chart-title">&#x1F465; Workload by Department</div><div id="deptWorkloadChart"></div>
+          </div>
+          <div class="glass-card chart-container">
+            <div class="chart-title">&#x23F1; Time in State</div><div id="timeInStateChart"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MANAGE -->
+      <div class="view" id="view-manage">
+        <div class="manage-tabs">
+          <button class="manage-tab active" onclick="switchManageTab('statuses')">Statuses</button>
+          <button class="manage-tab" onclick="switchManageTab('departments')">Departments</button>
+          <button class="manage-tab" onclick="switchManageTab('projects')">Projects</button>
+          <button class="manage-tab" onclick="switchManageTab('priorities')">Priorities</button>
+          <button class="manage-tab" onclick="switchManageTab('automation')">Automation Rules</button>
+        </div>
+        <div id="manageContent"></div>
+      </div>
+
+      <!-- CONFIG -->
+      <div class="view" id="view-config">
+        <div class="glass-card config-panel" style="padding:28px;">
+          <div class="config-section">
+            <div class="config-section-title">&#x1F50C; Google Sheets Connection</div>
+            <div class="config-field">
+              <label>Google Sheets Web App URL</label>
+              <input type="text" class="glass-input" id="gsheetUrl" placeholder="https://script.google.com/macros/s/.../exec">
+              <div class="hint">Paste your Google Apps Script Web App URL here</div>
+            </div>
+            <div class="config-field">
+              <label>Sheet ID (optional)</label>
+              <input type="text" class="glass-input" id="sheetId" placeholder="Your Google Sheet ID">
+              <div class="hint">Found in the URL: docs.google.com/spreadsheets/d/SHEET_ID/edit</div>
+            </div>
+            <button class="glass-btn primary" onclick="testConnection()">Test Connection</button>
+            <button class="glass-btn success" onclick="saveConfig()" style="margin-left:8px;">Save Configuration</button>
+          </div>
+          <div class="config-section">
+            <div class="config-section-title">&#x1F4CB; Setup Guide</div>
+            <div class="setup-step">
+              <div class="setup-step-num">1</div>
+              <div class="setup-step-content">
+                <div class="setup-step-title">Create a Google Sheet</div>
+                <div class="setup-step-desc">Create a new Google Sheet with these tabs: <strong>Tasks</strong>, <strong>Users</strong>, <strong>Projects</strong>, <strong>Departments</strong>, <strong>Statuses</strong>, <strong>Priorities</strong>, <strong>Comments</strong>, <strong>AuditLogs</strong></div>
+              </div>
+            </div>
+            <div class="setup-step">
+              <div class="setup-step-num">2</div>
+              <div class="setup-step-content">
+                <div class="setup-step-title">Open Apps Script</div>
+                <div class="setup-step-desc">In your Sheet, go to <strong>Extensions &rarr; Apps Script</strong>. Replace the default code with the provided script.</div>
+              </div>
+            </div>
+            <div class="setup-step">
+              <div class="setup-step-num">3</div>
+              <div class="setup-step-content">
+                <div class="setup-step-title">Deploy as Web App</div>
+                <div class="setup-step-desc">Click <strong>Deploy &rarr; New deployment</strong>. Choose type <strong>Web app</strong>. Set access to <strong>Anyone</strong> and deploy. Copy the Web App URL.</div>
+              </div>
+            </div>
+          </div>
+          <div class="config-section">
+            <div class="config-section-title">&#x1F4BE; Data Management</div>
+            <button class="glass-btn" onclick="exportData()">&#x1F4BE; Export All Data (JSON)</button>
+            <button class="glass-btn" onclick="document.getElementById('importFile').click()" style="margin-left:8px;">&#x1F4C2; Import Data (JSON)</button>
+            <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(this)">
+            <button class="glass-btn danger" onclick="resetData()" style="margin-left:8px;">&#x1F5D1; Reset to Demo Data</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Task Modal -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="taskModalTitle">New Task</div>
+      <button class="modal-close" onclick="closeTaskModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="taskId">
+      <div class="form-group"><label class="form-label">Title</label><input type="text" class="glass-input" id="taskTitle" placeholder="Task title..."></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Project</label><select class="form-select" id="taskProject"></select></div>
+        <div class="form-group"><label class="form-label">Category</label><input type="text" class="glass-input" id="taskCategory" placeholder="e.g. Feature, Bug"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="taskStatus"></select></div>
+        <div class="form-group"><label class="form-label">Priority</label><select class="form-select" id="taskPriority"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Assigned To</label><select class="form-select" id="taskAssignee"><option value="">Unassigned</option></select></div>
+        <div class="form-group"><label class="form-label">Department</label><select class="form-select" id="taskDepartment"><option value="">None</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Planned Start</label><input type="date" class="glass-input" id="taskPlannedStart"></div>
+        <div class="form-group"><label class="form-label">Planned Finish</label><input type="date" class="glass-input" id="taskPlannedFinish"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Planned Work (hrs)</label><input type="number" class="glass-input" id="taskPlannedWork" value="0" min="0" step="0.5"></div>
+        <div class="form-group"><label class="form-label">Planned Duration (days)</label><input type="number" class="glass-input" id="taskPlannedDuration" value="0" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Actual Start</label><input type="date" class="glass-input" id="taskActualStart"></div>
+        <div class="form-group"><label class="form-label">Actual Finish</label><input type="date" class="glass-input" id="taskActualFinish"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Actual Work (hrs)</label><input type="number" class="glass-input" id="taskActualWork" value="0" min="0" step="0.5"></div>
+        <div class="form-group"><label class="form-label">Actual Duration (days)</label><input type="number" class="glass-input" id="taskActualDuration" value="0" min="0"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Baseline 1 Start</label><input type="date" class="glass-input" id="taskBaseline1Start"></div>
+      <div class="form-group"><label class="form-label">Baseline 1 Finish</label><input type="date" class="glass-input" id="taskBaseline1Finish"></div>
+      <div class="form-group"><label class="form-label">Baseline 2 Start</label><input type="date" class="glass-input" id="taskBaseline2Start"></div>
+      <div class="form-group"><label class="form-label">Baseline 2 Finish</label><input type="date" class="glass-input" id="taskBaseline2Finish"></div>
+      <div class="form-group"><label class="form-label">Comments</label><textarea class="glass-input form-textarea" id="taskComments" placeholder="Add notes..."></textarea></div>
+      <div class="form-group"><label class="form-label"><input type="checkbox" id="taskComplete" style="margin-right:8px;"> Mark as Complete</label></div>
+
+      <div class="comments-section" id="taskCommentsSection" style="display:none;">
+        <div class="form-label">&#x1F4AC; Comments</div>
+        <div class="comments-list" id="commentsList"></div>
+        <div class="comment-input-row">
+          <input type="text" class="glass-input" id="newComment" placeholder="Write a comment...">
+          <button class="glass-btn primary" onclick="addComment()">Post</button>
+        </div>
+      </div>
+
+      <div class="audit-trail" id="auditTrailSection" style="display:none;">
+        <div class="form-label">&#x1F4CB; Audit Trail</div>
+        <div id="auditList"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="glass-btn" onclick="closeTaskModal()">Cancel</button>
+      <button class="glass-btn danger" id="deleteTaskBtn" onclick="deleteTask()" style="display:none;">Delete</button>
+      <button class="glass-btn primary" onclick="saveTask()">Save Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title" id="userModalTitle">Add User</div>
+      <button class="modal-close" onclick="closeUserModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="userId">
+      <div class="form-group"><label class="form-label">Name</label><input type="text" class="glass-input" id="userNameInput" placeholder="Full name"></div>
+      <div class="form-group"><label class="form-label">Role</label>
+        <select class="form-select" id="userRoleInput">
+          <option value="User">User</option>
+          <option value="Manager">Manager</option>
+          <option value="Admin">Admin</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">PIN (4 digits)</label><input type="password" class="glass-input" id="userPin" placeholder="1234" maxlength="4"></div>
+      <div class="form-group"><label class="form-label">Default Project</label><select class="form-select" id="userProject"><option value="">None</option></select></div>
+      <div class="form-group"><label class="form-label">Departments</label>
+        <div id="userDeptCheckboxes"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Projects</label>
+        <div id="userProjectCheckboxes"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="glass-btn" onclick="closeUserModal()">Cancel</button>
+      <button class="glass-btn danger" id="deleteUserBtn" onclick="deleteUser()" style="display:none;">Delete</button>
+      <button class="glass-btn primary" onclick="saveUser()">Save User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Status Modal -->
+<div class="modal-overlay" id="statusModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header"><div class="modal-title">Add Status</div><button class="modal-close" onclick="closeStatusModal()">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="statusId">
+      <div class="form-group"><label class="form-label">Name</label><input type="text" class="glass-input" id="statusName" placeholder="e.g. In Review"></div>
+      <div class="form-group"><label class="form-label">Color</label>
+        <div class="color-picker" id="statusColorPicker">
+          <div class="color-option selected" style="background:#4fc3f7;" data-color="#4fc3f7"></div>
+          <div class="color-option" style="background:#66bb6a;" data-color="#66bb6a"></div>
+          <div class="color-option" style="background:#ffa726;" data-color="#ffa726"></div>
+          <div class="color-option" style="background:#ef5350;" data-color="#ef5350"></div>
+          <div class="color-option" style="background:#ab47bc;" data-color="#ab47bc"></div>
+          <div class="color-option" style="background:#26a69a;" data-color="#26a69a"></div>
+          <div class="color-option" style="background:#ec407a;" data-color="#ec407a"></div>
+          <div class="color-option" style="background:#78909c;" data-color="#78909c"></div>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Sort Order</label><input type="number" class="glass-input" id="statusSortOrder" value="0" min="0"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="glass-btn" onclick="closeStatusModal()">Cancel</button>
+      <button class="glass-btn primary" onclick="saveStatus()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+
+<script>
+// ============================================
+// STRATEGA PM — Core Application Logic
+// ============================================
+
+const App = {
+  currentUser: null, currentView: 'dashboard', currentProject: 'all',
+  kanbanFilter: 'all', kanbanMineOnly: false, ganttZoom: 'day',
+  manageTab: 'statuses', draggedTask: null,
+  config: { gsheetUrl: detectSecretUrl(), sheetId: '' },
+  data: { users: [], projects: [], departments: [], statuses: [], priorities: [], tasks: [], comments: [], auditLogs: [], automationRules: [] }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadFromStorage(); seedIfEmpty(); setupPinPad(); updateSyncStatus(); renderAll();
+  const savedFav = localStorage.getItem('stratega_favicon');
+  if (savedFav) applyFavicon(savedFav);
+});
+
+
+function detectSecretUrl() {
+  // Check if the URL was injected by GitHub Actions / build process
+  const injected = 'https://script.google.com/macros/s/AKfycbxogmhlhKYmW9lVWXML_CGWgbm7RTHw97WVQURldnwNcKD7vTjj6hYlUwLg6SVf0VVwWQ/exec';
+  if (injected && !injected.includes('STRATEGA_WEBAPP_URL')) {
+    return injected;
+  }
+  // Check for a meta tag injected at build time
+  const metaTag = document.querySelector('meta[name="stratega-webapp-url"]');
+  if (metaTag && metaTag.content && !metaTag.content.includes('STRATEGA_WEBAPP_URL')) {
+    return metaTag.content;
+  }
+  return '';
+}
+function isSecretConfigured() {
+  const url = App.config.gsheetUrl;
+  return url && url.length > 10 && !url.includes('STRATEGA_WEBAPP_URL');
+}
+function loadFromStorage() {
+  const saved = localStorage.getItem('stratega_data');
+  if (saved) { try { App.data = JSON.parse(saved); } catch(e) {} }
+  const savedConfig = localStorage.getItem('stratega_config');
+  if (savedConfig) { 
+    try { 
+      const parsed = JSON.parse(savedConfig);
+      App.config.sheetId = parsed.sheetId || '';
+      // Load gsheetUrl from localStorage only if no secret is configured
+      // Secret detection runs first via detectSecretUrl() in App.config initialization
+      if (!isSecretConfigured() && parsed.gsheetUrl) {
+        App.config.gsheetUrl = parsed.gsheetUrl;
+      }
+    } catch(e) {} 
+  }
+  const savedUser = localStorage.getItem('stratega_user');
+  if (savedUser) { try { App.currentUser = JSON.parse(savedUser); showApp(); } catch(e) {} }
+}
+
+function saveToStorage() {
+  localStorage.setItem('stratega_data', JSON.stringify(App.data));
+  if (App.currentUser) localStorage.setItem('stratega_user', JSON.stringify(App.currentUser));
+  // Don't save gsheetUrl to localStorage if it came from a secret
+  const configToSave = { ...App.config };
+  if (isSecretConfigured()) {
+    configToSave.gsheetUrl = '';
+  }
+  localStorage.setItem('stratega_config', JSON.stringify(configToSave));
+}
+
+function seedIfEmpty() {
+  if (App.data.statuses.length > 0) return;
+  App.data.statuses = [
+    { id: 1, name: 'Todo', color: '#78909c', sort_order: 0 },
+    { id: 2, name: 'In Progress', color: '#4fc3f7', sort_order: 1 },
+    { id: 3, name: 'Review', color: '#ffa726', sort_order: 2 },
+    { id: 4, name: 'Done', color: '#66bb6a', sort_order: 3 }
+  ];
+  App.data.priorities = [
+    { id: 1, name: 'Low', color: '#66bb6a' },
+    { id: 2, name: 'Medium', color: '#ffa726' },
+    { id: 3, name: 'High', color: '#ef5350' }
+  ];
+  App.data.departments = [
+    { id: 1, name: 'Administration', project_id: null, parent_department_id: null },
+    { id: 2, name: 'Engineering', project_id: null, parent_department_id: null },
+    { id: 3, name: 'Quality Assurance', project_id: null, parent_department_id: null },
+    { id: 4, name: 'Frontend', project_id: null, parent_department_id: 2 },
+    { id: 5, name: 'Backend', project_id: null, parent_department_id: 2 }
+  ];
+  App.data.projects = [
+    { id: 1, name: 'Internal Systems' },
+    { id: 2, name: 'Mobile App' },
+    { id: 3, name: 'Web Platform' }
+  ];
+  App.data.users = [
+    { id: 1, name: 'System Admin', role: 'Admin', project_id: 1, pin_hash: '1234', departments: [1], projects: [1,2,3] },
+    { id: 2, name: 'Alice Chen', role: 'Manager', project_id: 2, pin_hash: '1111', departments: [2,4], projects: [2] },
+    { id: 3, name: 'Bob Smith', role: 'User', project_id: 2, pin_hash: '2222', departments: [2,5], projects: [2] },
+    { id: 4, name: 'Carol White', role: 'User', project_id: 3, pin_hash: '3333', departments: [3], projects: [3] },
+    { id: 5, name: 'David Lee', role: 'Manager', project_id: 3, pin_hash: '4444', departments: [2,4], projects: [3] }
+  ];
+  const today = new Date();
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x.toISOString().split('T')[0]; };
+  App.data.tasks = [
+    { id: 1, title: 'Design system architecture', project_id: 1, category: 'Architecture', status_id: 2, priority_id: 3, assigned_to: 2, department_id: 2, complete: false, planned_start: addDays(today,-5), planned_finish: addDays(today,5), planned_work: 40, planned_duration: 10, actual_start: addDays(today,-5), actual_finish: null, actual_work: 20, actual_duration: 5, baseline_1_start: addDays(today,-7), baseline_1_finish: addDays(today,3), baseline_2_start: addDays(today,-6), baseline_2_finish: addDays(today,4), comments: 'Initial review completed' },
+    { id: 2, title: 'Implement auth module', project_id: 2, category: 'Feature', status_id: 1, priority_id: 3, assigned_to: 3, department_id: 5, complete: false, planned_start: addDays(today,0), planned_finish: addDays(today,7), planned_work: 24, planned_duration: 7, actual_start: null, actual_finish: null, actual_work: 0, actual_duration: 0, baseline_1_start: addDays(today,-2), baseline_1_finish: addDays(today,5), baseline_2_start: null, baseline_2_finish: null, comments: '' },
+    { id: 3, title: 'Write API documentation', project_id: 2, category: 'Documentation', status_id: 3, priority_id: 2, assigned_to: 2, department_id: 2, complete: false, planned_start: addDays(today,-10), planned_finish: addDays(today,-2), planned_work: 16, planned_duration: 8, actual_start: addDays(today,-10), actual_finish: addDays(today,-1), actual_work: 18, actual_duration: 9, baseline_1_start: addDays(today,-10), baseline_1_finish: addDays(today,-2), baseline_2_start: null, baseline_2_finish: null, comments: 'Pending final review' },
+    { id: 4, title: 'Fix login bug', project_id: 3, category: 'Bug', status_id: 4, priority_id: 3, assigned_to: 4, department_id: 4, complete: true, planned_start: addDays(today,-15), planned_finish: addDays(today,-10), planned_work: 8, planned_duration: 5, actual_start: addDays(today,-15), actual_finish: addDays(today,-12), actual_work: 6, actual_duration: 3, baseline_1_start: addDays(today,-15), baseline_1_finish: addDays(today,-10), baseline_2_start: null, baseline_2_finish: null, comments: 'Resolved and deployed' },
+    { id: 5, title: 'Performance optimization', project_id: 3, category: 'Optimization', status_id: 2, priority_id: 2, assigned_to: 5, department_id: 4, complete: false, planned_start: addDays(today,-3), planned_finish: addDays(today,10), planned_work: 32, planned_duration: 13, actual_start: addDays(today,-3), actual_finish: null, actual_work: 8, actual_duration: 3, baseline_1_start: addDays(today,-5), baseline_1_finish: addDays(today,8), baseline_2_start: null, baseline_2_finish: null, comments: '' },
+    { id: 6, title: 'QA regression testing', project_id: 1, category: 'Testing', status_id: 1, priority_id: 1, assigned_to: 4, department_id: 3, complete: false, planned_start: addDays(today,5), planned_finish: addDays(today,12), planned_work: 20, planned_duration: 7, actual_start: null, actual_finish: null, actual_work: 0, actual_duration: 0, baseline_1_start: null, baseline_1_finish: null, baseline_2_start: null, baseline_2_finish: null, comments: '' },
+    { id: 7, title: 'Database migration', project_id: 1, category: 'Infrastructure', status_id: 2, priority_id: 3, assigned_to: 3, department_id: 5, complete: false, planned_start: addDays(today,-8), planned_finish: addDays(today,2), planned_work: 30, planned_duration: 10, actual_start: addDays(today,-8), actual_finish: null, actual_work: 24, actual_duration: 8, baseline_1_start: addDays(today,-10), baseline_1_finish: addDays(today,0), baseline_2_start: null, baseline_2_finish: null, comments: '90% complete' },
+    { id: 8, title: 'User onboarding flow', project_id: 2, category: 'UX', status_id: 3, priority_id: 2, assigned_to: 2, department_id: 4, complete: false, planned_start: addDays(today,-12), planned_finish: addDays(today,-5), planned_work: 20, planned_duration: 7, actual_start: addDays(today,-12), actual_finish: addDays(today,-4), actual_work: 22, actual_duration: 8, baseline_1_start: addDays(today,-12), baseline_1_finish: addDays(today,-5), baseline_2_start: null, baseline_2_finish: null, comments: 'UAT feedback received' }
+  ];
+  App.data.comments = [
+    { id: 1, task_id: 1, user_id: 2, text: 'Architecture diagram looks good. Proceeding with implementation.', created_at: addDays(today,-3)+'T10:00:00Z' },
+    { id: 2, task_id: 1, user_id: 1, text: 'Approved. Make sure to include failover strategy.', created_at: addDays(today,-2)+'T14:30:00Z' },
+    { id: 3, task_id: 3, user_id: 2, text: 'Documentation draft ready for review.', created_at: addDays(today,-5)+'T09:00:00Z' },
+    { id: 4, task_id: 4, user_id: 4, text: 'Bug fixed in v2.1.3', created_at: addDays(today,-12)+'T16:00:00Z' }
+  ];
+  App.data.auditLogs = [
+    { id: 1, task_id: 1, action: 'Task created', user_id: 1, timestamp: addDays(today,-10)+'T08:00:00Z' },
+    { id: 2, task_id: 1, action: 'Status changed to In Progress', user_id: 2, timestamp: addDays(today,-5)+'T09:00:00Z' },
+    { id: 3, task_id: 2, action: 'Task created', user_id: 2, timestamp: addDays(today,-2)+'T10:00:00Z' },
+    { id: 4, task_id: 3, action: 'Status changed to Review', user_id: 2, timestamp: addDays(today,-1)+'T11:00:00Z' },
+    { id: 5, task_id: 4, action: 'Marked as complete', user_id: 4, timestamp: addDays(today,-12)+'T16:00:00Z' }
+  ];
+  App.data.automationRules = [
+    { id: 1, source_field: 'status_id', trigger_value: '4', target_field: 'complete', target_value: 'true' },
+    { id: 2, source_field: 'complete', trigger_value: 'true', target_field: 'actual_finish', target_value: 'TODAY' }
+  ];
+  saveToStorage();
+}
+
+let pinBuffer = '';
+function setupPinPad() {
+  document.querySelectorAll('.pin-key').forEach(key => {
+    key.addEventListener('click', () => {
+      const k = key.dataset.key;
+      if (k === 'backspace') { pinBuffer = pinBuffer.slice(0, -1); }
+      else if (pinBuffer.length < 4) { pinBuffer += k; }
+      updatePinDots();
+      if (pinBuffer.length === 4) { setTimeout(verifyPin, 300); }
+    });
+  });
+}
+function updatePinDots() {
+  document.querySelectorAll('.pin-dot').forEach((dot, i) => { dot.classList.toggle('filled', i < pinBuffer.length); });
+  document.getElementById('loginError').textContent = '';
+}
+function verifyPin() {
+  const user = App.data.users.find(u => u.pin_hash === pinBuffer);
+  if (user) {
+    App.currentUser = user; pinBuffer = ''; updatePinDots(); saveToStorage(); showApp();
+    showToast('Welcome, ' + user.name + '!', 'success');
+  } else {
+    document.getElementById('loginError').textContent = 'Invalid PIN. Try again.';
+    pinBuffer = ''; setTimeout(updatePinDots, 500);
+  }
+}
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = 'flex';
+  document.getElementById('userName').textContent = App.currentUser.name;
+  document.getElementById('userRole').textContent = App.currentUser.role;
+  document.getElementById('userAvatar').textContent = getInitials(App.currentUser.name);
+  if (App.currentUser.role === 'Admin') {
+    document.getElementById('adminNavSection').style.display = 'block';
+    document.getElementById('addUserBtn').style.display = 'inline-flex';
+  }
+  // Hide Config nav item if secret is configured
+  const configNav = document.querySelector('.nav-item[data-view="config"]');
+  if (configNav && isSecretConfigured()) {
+    configNav.style.display = 'none';
+  }
+  renderAll();
+}
+function logout() {
+  App.currentUser = null; localStorage.removeItem('stratega_user');
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('adminNavSection').style.display = 'none';
+  document.getElementById('addUserBtn').style.display = 'none';
+  pinBuffer = ''; updatePinDots();
+}
+function navigateTo(view) {
+  App.currentView = view;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navItem = document.querySelector('.nav-item[data-view="' + view + '"]');
+  if (navItem) navItem.classList.add('active');
+  const titles = { dashboard: 'Dashboard', kanban: 'Kanban Board', gantt: 'Gantt Chart', team: 'Team Directory', analytics: 'Analytics', manage: 'Manage', config: 'Configuration' };
+  document.getElementById('pageTitle').textContent = titles[view] || view;
+  document.getElementById('newTaskBtn').style.display = (view === 'kanban' || view === 'gantt') ? 'inline-flex' : 'none';
+  renderAll();
+  if (window.innerWidth <= 768) toggleSidebar();
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('mobileOverlay').classList.toggle('show');
+}
+function switchProject(pid) { App.currentProject = pid; renderAll(); }
+function renderAll() {
+  updateProjectSelectors();
+  if (App.currentView === 'dashboard') renderDashboard();
+  if (App.currentView === 'kanban') renderKanban();
+  if (App.currentView === 'gantt') renderGantt();
+  if (App.currentView === 'team') renderTeam();
+  if (App.currentView === 'analytics') renderAnalytics();
+  if (App.currentView === 'manage') renderManage();
+  if (App.currentView === 'config') renderConfig();
+}
+function updateProjectSelectors() {
+  const opts = '<option value="all">All Projects</option>' + App.data.projects.map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('');
+  const ps = document.getElementById('projectSelector');
+  if (ps) { ps.innerHTML = opts; ps.value = App.currentProject; }
+  const gps = document.getElementById('ganttProjectFilter');
+  if (gps) gps.innerHTML = opts;
+  const gds = document.getElementById('ganttDeptFilter');
+  if (gds) gds.innerHTML = '<option value="all">All Departments</option>' + App.data.departments.map(d => '<option value="' + d.id + '">' + esc(d.name) + '</option>').join('');
+}
+function renderDashboard() {
+  const tasks = getFilteredTasks();
+  document.getElementById('statTotalTasks').textContent = tasks.length;
+  document.getElementById('statInProgress').textContent = tasks.filter(t => t.status_id === 2).length;
+  document.getElementById('statCompleted').textContent = tasks.filter(t => t.complete).length;
+  document.getElementById('statAtRisk').textContent = tasks.filter(t => {
+    if (t.complete) return false;
+    const planned = t.planned_finish ? new Date(t.planned_finish) : null;
+    return planned && planned < new Date();
+  }).length;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const currentMonth = new Date().getMonth();
+  const velocityData = [];
+  for (let i = 5; i >= 0; i--) {
+    const m = (currentMonth - i + 12) % 12;
+    const count = tasks.filter(t => t.actual_finish && new Date(t.actual_finish).getMonth() === m).length;
+    velocityData.push({ label: months[m], value: count });
+  }
+  renderBarChart('velocityChart', velocityData);
+  const logs = App.data.auditLogs.slice().sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 8);
+  const feed = document.getElementById('activityFeed');
+  if (logs.length === 0) feed.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128203;</div><div class="empty-state-title">No activity yet</div></div>';
+  else feed.innerHTML = logs.map(log => {
+    const user = App.data.users.find(u => u.id === log.user_id);
+    const colors = ['#4fc3f7','#66bb6a','#ffa726','#ef5350','#ab47bc'];
+    return '<div class="activity-item"><div class="activity-dot" style="background:' + colors[log.id % colors.length] + '"></div><div class="activity-content"><div class="activity-text">' + esc(log.action) + (user ? ' by <strong>' + esc(user.name) + '</strong>' : '') + '</div><div class="activity-time">' + timeAgo(log.timestamp) + '</div></div></div>';
+  }).join('');
+  const heatmap = document.getElementById('workloadHeatmap');
+  const deptTasks = {};
+  App.data.departments.forEach(d => deptTasks[d.id] = tasks.filter(t => t.department_id === d.id).length);
+  const maxTasks = Math.max(...Object.values(deptTasks), 1);
+  let cells = '';
+  for (let i = 0; i < 28; i++) {
+    const deptId = App.data.departments[i % App.data.departments.length]?.id;
+    const intensity = deptTasks[deptId] || 0;
+    const opacity = Math.max(0.1, intensity / maxTasks);
+    cells += '<div class="heatmap-cell" style="background:rgba(79,195,247,' + opacity + ');" title="' + esc(App.data.departments.find(d=>d.id===deptId)?.name||'') + ': ' + intensity + ' tasks"></div>';
+  }
+  heatmap.innerHTML = cells;
+}
+function renderBarChart(containerId, data) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const max = Math.max(...data.map(d => d.value), 1);
+  let html = '<div class="bar-chart-y-axis">';
+  for (let i = 4; i >= 0; i--) html += '<span>' + Math.round(max * i / 4) + '</span>';
+  html += '</div><div class="bar-chart-bars">';
+  data.forEach(d => {
+    html += '<div class="bar-chart-bar" style="height:' + ((d.value / max) * 100) + '%;"><span class="bar-chart-label">' + d.label + '</span></div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderKanban() {
+  const board = document.getElementById('kanbanBoard');
+  let tasks = getFilteredTasks();
+  if (App.kanbanFilter !== 'all') {
+    const pid = App.data.priorities.find(p => p.name.toLowerCase() === App.kanbanFilter)?.id;
+    if (pid) tasks = tasks.filter(t => t.priority_id === pid);
+  }
+  if (App.kanbanMineOnly && App.currentUser) tasks = tasks.filter(t => t.assigned_to === App.currentUser.id);
+  let html = '';
+  const sortedStatuses = App.data.statuses.slice().sort((a,b) => (a.sort_order||0) - (b.sort_order||0));
+  sortedStatuses.forEach(status => {
+    const statusTasks = tasks.filter(t => t.status_id === status.id);
+    html += '<div class="kanban-column" data-status-id="' + status.id + '">';
+    html += '<div class="column-header"><div class="column-title"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + status.color + ';margin-right:6px;"></span>' + esc(status.name) + '</div><div class="column-badge">' + statusTasks.length + '</div></div>';
+    html += '<div class="column-body drop-zone" ondragover="allowDrop(event)" ondrop="dropTask(event,' + status.id + ')" ondragleave="dragLeave(event)">';
+    statusTasks.forEach(task => { html += renderKanbanCard(task); });
+    html += '</div></div>';
+  });
+  board.innerHTML = html;
+}
+function renderKanbanCard(task) {
+  const priority = App.data.priorities.find(p => p.id === task.priority_id);
+  const assignee = App.data.users.find(u => u.id === task.assigned_to);
+  const comments = App.data.comments.filter(c => c.task_id === task.id);
+  const nextStatus = getNextStatus(task.status_id);
+  let html = '<div class="kanban-card" draggable="true" ondragstart="dragStart(event,' + task.id + ')" ondragend="dragEnd(event)">';
+  html += '<div class="card-priority-bar" style="background:' + (priority ? priority.color : '#78909c') + '"></div>';
+  html += '<div class="card-header"><div class="card-title">' + esc(task.title) + '</div>';
+  html += '<div class="card-actions">';
+  html += '<button class="card-action-btn" onclick="openTaskModal(' + task.id + ')" title="Edit">&#9999;</button>';
+  if (canEdit(task)) html += '<button class="card-action-btn" onclick="deleteTask(' + task.id + ')" title="Delete">&#128465;</button>';
+  html += '</div></div>';
+  html += '<div class="card-meta">';
+  if (priority) html += '<span class="badge priority-' + priority.name.toLowerCase() + '">' + priority.name + '</span>';
+  if (task.category) html += '<span class="card-meta-item">&#128193; ' + esc(task.category) + '</span>';
+  html += '</div>';
+  if (task.planned_start || task.planned_finish) html += '<div class="card-dates">&#128197; ' + (task.planned_start || '?') + ' &rarr; ' + (task.planned_finish || '?') + '</div>';
+  html += '<div style="display:flex;align-items:center;margin-top:8px;">';
+  if (comments.length > 0) html += '<span class="card-comments-badge">&#128172; ' + comments.length + '</span>';
+  html += '<div style="flex:1;"></div>';
+  if (assignee) html += '<div class="card-assignee" title="' + esc(assignee.name) + '">' + getInitials(assignee.name) + '</div>';
+  if (nextStatus && canEdit(task)) html += '<button class="status-cycle-btn" onclick="cycleStatus(' + task.id + ',' + nextStatus.id + ')" title="Move to ' + esc(nextStatus.name) + '">&#10145;</button>';
+  html += '</div></div>';
+  return html;
+}
+function getNextStatus(currentStatusId) {
+  const sorted = App.data.statuses.slice().sort((a,b) => (a.sort_order||0) - (b.sort_order||0));
+  const idx = sorted.findIndex(s => s.id === currentStatusId);
+  if (idx === -1) return null;
+  return sorted[(idx + 1) % sorted.length];
+}
+function cycleStatus(taskId, newStatusId) {
+  const task = App.data.tasks.find(t => t.id === taskId);
+  if (!task || !canEdit(task)) return;
+  const oldStatus = task.status_id;
+  task.status_id = newStatusId;
+  evaluateAutomation(task);
+  logAudit(taskId, 'Status changed from ' + getStatusName(oldStatus) + ' to ' + getStatusName(newStatusId));
+  saveToStorage(); syncToGoogleSheets(); renderAll(); showToast('Status updated', 'success');
+}
+function dragStart(e, taskId) { App.draggedTask = taskId; e.target.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+function dragEnd(e) { e.target.classList.remove('dragging'); }
+function allowDrop(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function dropTask(e, statusId) {
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  if (!App.draggedTask) return;
+  const task = App.data.tasks.find(t => t.id === App.draggedTask);
+  if (!task || !canEdit(task)) { showToast('Permission denied', 'error'); return; }
+  const oldStatus = task.status_id;
+  task.status_id = statusId;
+  evaluateAutomation(task);
+  logAudit(task.id, 'Status changed from ' + getStatusName(oldStatus) + ' to ' + getStatusName(statusId));
+  saveToStorage(); syncToGoogleSheets(); renderAll(); showToast('Task moved', 'success');
+  App.draggedTask = null;
+}
+function setKanbanFilter(filter) {
+  App.kanbanFilter = filter;
+  document.querySelectorAll('.filter-chip').forEach(f => f.classList.remove('active'));
+  document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1))?.classList.add('active');
+  renderKanban();
+}
+function toggleMyTasks() {
+  App.kanbanMineOnly = !App.kanbanMineOnly;
+  document.getElementById('filterMine').classList.toggle('active', App.kanbanMineOnly);
+  renderKanban();
+}
+function renderGantt() {
+  const container = document.getElementById('ganttContainer');
+  let tasks = getFilteredTasks();
+  const projFilter = document.getElementById('ganttProjectFilter')?.value || 'all';
+  const deptFilter = document.getElementById('ganttDeptFilter')?.value || 'all';
+  if (projFilter !== 'all') tasks = tasks.filter(t => t.project_id == projFilter);
+  if (deptFilter !== 'all') tasks = tasks.filter(t => t.department_id == deptFilter);
+  if (tasks.length === 0) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128197;</div><div class="empty-state-title">No tasks to display</div></div>'; return; }
+  let minDate = new Date(); let maxDate = new Date();
+  tasks.forEach(t => {
+    [t.planned_start, t.planned_finish, t.actual_start, t.actual_finish, t.baseline_1_start, t.baseline_1_finish, t.baseline_2_start, t.baseline_2_finish].filter(Boolean).forEach(d => {
+      const date = new Date(d); if (date < minDate) minDate = date; if (date > maxDate) maxDate = date;
+    });
+  });
+  minDate.setDate(minDate.getDate() - 3); maxDate.setDate(maxDate.getDate() + 7);
+  const dayCount = Math.ceil((maxDate - minDate) / (1000*60*60*24)) + 1;
+  let html = '<div class="gantt-chart">';
+  html += '<div class="gantt-header"><div class="gantt-task-label">Task</div><div class="gantt-timeline-header">';
+  for (let i = 0; i < dayCount; i++) {
+    const d = new Date(minDate); d.setDate(d.getDate() + i);
+    const cls = (d.getDay() === 0 || d.getDay() === 6 ? 'weekend ' : '') + (d.toDateString() === new Date().toDateString() ? 'today' : '');
+    html += '<div class="gantt-day-header ' + cls + '">' + d.getDate() + '</div>';
+  }
+  html += '</div></div>';
+  const todayOffset = Math.ceil((new Date() - minDate) / (1000*60*60*24));
+  if (todayOffset >= 0 && todayOffset < dayCount) {
+    html += '<div class="gantt-today-line" style="left:calc(200px + ' + ((todayOffset / dayCount) * 100) + '%);"><div class="gantt-today-label">Today</div></div>';
+  }
+  tasks.forEach(task => {
+    html += '<div class="gantt-row"><div class="gantt-task-name">' + esc(task.title) + '</div><div class="gantt-timeline">';
+    for (let i = 0; i < dayCount; i++) {
+      const d = new Date(minDate); d.setDate(d.getDate() + i);
+      const pct = (i / dayCount) * 100; const width = (1 / dayCount) * 100;
+      let cls = 'gantt-gridline'; if (d.getDay() === 1) cls += ' week'; if (d.getDate() === 1) cls += ' month';
+      html += '<div class="' + cls + '" style="left:' + pct + '%;width:' + width + '%;"></div>';
+    }
+    [['planned',task.planned_start,task.planned_finish],['actual',task.actual_start,task.actual_finish],['baseline1',task.baseline_1_start,task.baseline_1_finish],['baseline2',task.baseline_2_start,task.baseline_2_finish]].forEach(([type,start,finish]) => {
+      if (start && finish) {
+        const s = Math.ceil((new Date(start) - minDate) / (1000*60*60*24));
+        const dur = Math.ceil((new Date(finish) - new Date(start)) / (1000*60*60*24)) + 1;
+        const left = (s / dayCount) * 100; const width = (dur / dayCount) * 100;
+        const label = type === 'planned' ? 'Planned' : type === 'actual' ? 'Actual' : '';
+        html += '<div class="gantt-bar ' + type + '" style="left:' + left + '%;width:' + width + '%;" title="' + type + ': ' + start + ' to ' + finish + '">' + label + '</div>';
+      }
+    });
+    html += '</div></div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+function zoomGantt(zoom) { App.ganttZoom = zoom; renderGantt(); }
+function renderTeam() {
+  const grid = document.getElementById('teamGrid');
+  let users = App.data.users;
+  if (App.currentUser?.role === 'User') users = users.filter(u => u.id === App.currentUser.id);
+  if (App.currentUser?.role === 'Manager') users = users.filter(u => u.id === App.currentUser.id || (u.projects && u.projects.some(p => App.currentUser.projects?.includes(p))));
+  if (users.length === 0) { grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128101;</div><div class="empty-state-title">No team members</div></div>'; return; }
+  grid.innerHTML = users.map(user => {
+    const depts = (user.departments || []).map(did => App.data.departments.find(d => d.id === did)?.name).filter(Boolean);
+    const projs = (user.projects || []).map(pid => App.data.projects.find(p => p.id === pid)?.name).filter(Boolean);
+    return '<div class="glass-card team-card">' +
+      '<div class="team-avatar">' + getInitials(user.name) + '</div>' +
+      '<div class="team-info"><div class="team-name">' + esc(user.name) + '</div>' +
+      '<span class="team-role ' + user.role.toLowerCase() + '">' + user.role + '</span>' +
+      '<div class="team-depts">&#127970; ' + (depts.join(', ') || 'No departments') + '</div>' +
+      '<div class="team-projects">&#128193; ' + (projs.join(', ') || 'No projects') + '</div></div>' +
+      (App.currentUser?.role === 'Admin' ? '<div class="team-card-actions"><button class="card-action-btn" onclick="openUserModal(' + user.id + ')" title="Edit">&#9999;</button><button class="card-action-btn" onclick="deleteUser(' + user.id + ')" title="Delete">&#128465;</button></div>' : '') +
+      '</div>';
+  }).join('');
+}
+function renderAnalytics() {
+  const tasks = getFilteredTasks();
+  const statusCounts = {}; App.data.statuses.forEach(s => statusCounts[s.name] = 0);
+  tasks.forEach(t => { const s = App.data.statuses.find(s => s.id === t.status_id); if (s) statusCounts[s.name]++; });
+  renderBarChart('statusChart', Object.entries(statusCounts).map(([k,v]) => ({label:k,value:v})));
+  const bottleneckData = App.data.statuses.map(s => {
+    const st = tasks.filter(t => t.status_id === s.id);
+    const avgDays = st.reduce((sum, t) => {
+      const start = t.actual_start ? new Date(t.actual_start) : new Date(t.planned_start);
+      const end = t.actual_finish ? new Date(t.actual_finish) : new Date();
+      return sum + Math.max(0, (end - start) / (1000*60*60*24));
+    }, 0) / Math.max(st.length, 1);
+    return { label: s.name, value: Math.round(avgDays * 10) / 10 };
+  });
+  renderBarChart('bottleneckChart', bottleneckData);
+  const deptData = App.data.departments.map(d => ({ label: d.name.substring(0, 10), value: tasks.filter(t => t.department_id === d.id).length }));
+  renderBarChart('deptWorkloadChart', deptData);
+  const timeData = App.data.statuses.map(s => ({ label: s.name.substring(0, 8), value: Math.round(tasks.filter(t => t.status_id === s.id).reduce((sum, t) => sum + (t.actual_work || 0), 0)) }));
+  renderBarChart('timeInStateChart', timeData);
+}
+
+function renderManage() {
+  const content = document.getElementById('manageContent');
+  if (!content) return;
+  if (App.manageTab === 'statuses') renderStatusesManage(content);
+  else if (App.manageTab === 'departments') renderDepartmentsManage(content);
+  else if (App.manageTab === 'projects') renderProjectsManage(content);
+  else if (App.manageTab === 'priorities') renderPrioritiesManage(content);
+  else if (App.manageTab === 'automation') renderAutomationManage(content);
+}
+function switchManageTab(tab) {
+  App.manageTab = tab;
+  document.querySelectorAll('.manage-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderManage();
+}
+function renderStatusesManage(container) {
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div class="page-title" style="font-size:18px;">Statuses</div><button class="glass-btn primary" onclick="openStatusModal()">+ Add Status</button></div>';
+  html += '<table class="data-table"><thead><tr><th>Name</th><th>Color</th><th>Sort Order</th><th>Actions</th></tr></thead><tbody>';
+  App.data.statuses.slice().sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).forEach(s => {
+    html += '<tr><td>' + esc(s.name) + '</td><td><span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:' + s.color + ';"></span></td><td>' + (s.sort_order||0) + '</td><td class="actions"><button class="table-action" onclick="openStatusModal(' + s.id + ')">&#9999;</button><button class="table-action delete" onclick="deleteStatus(' + s.id + ')">&#128465;</button></td></tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+function renderDepartmentsManage(container) {
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div class="page-title" style="font-size:18px;">Departments</div><button class="glass-btn primary" onclick="openDepartmentModal()">+ Add Department</button></div>';
+  html += '<table class="data-table"><thead><tr><th>Name</th><th>Project</th><th>Parent</th><th>Actions</th></tr></thead><tbody>';
+  App.data.departments.forEach(d => {
+    const proj = App.data.projects.find(p => p.id === d.project_id);
+    const parent = App.data.departments.find(pd => pd.id === d.parent_department_id);
+    html += '<tr><td>' + esc(d.name) + '</td><td>' + (proj ? esc(proj.name) : 'Global') + '</td><td>' + (parent ? esc(parent.name) : '-') + '</td><td class="actions"><button class="table-action" onclick="openDepartmentModal(' + d.id + ')">&#9999;</button><button class="table-action delete" onclick="deleteDepartment(' + d.id + ')">&#128465;</button></td></tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+function renderProjectsManage(container) {
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div class="page-title" style="font-size:18px;">Projects</div><button class="glass-btn primary" onclick="openProjectModal()">+ Add Project</button></div>';
+  html += '<table class="data-table"><thead><tr><th>Name</th><th>Tasks</th><th>Actions</th></tr></thead><tbody>';
+  App.data.projects.forEach(p => {
+    html += '<tr><td>' + esc(p.name) + '</td><td>' + App.data.tasks.filter(t => t.project_id === p.id).length + '</td><td class="actions"><button class="table-action" onclick="openProjectModal(' + p.id + ')">&#9999;</button><button class="table-action delete" onclick="deleteProject(' + p.id + ')">&#128465;</button></td></tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+function renderPrioritiesManage(container) {
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div class="page-title" style="font-size:18px;">Priorities</div><button class="glass-btn primary" onclick="openPriorityModal()">+ Add Priority</button></div>';
+  html += '<table class="data-table"><thead><tr><th>Name</th><th>Color</th><th>Actions</th></tr></thead><tbody>';
+  App.data.priorities.forEach(p => {
+    html += '<tr><td>' + esc(p.name) + '</td><td><span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:' + p.color + ';"></span></td><td class="actions"><button class="table-action" onclick="openPriorityModal(' + p.id + ')">&#9999;</button><button class="table-action delete" onclick="deletePriority(' + p.id + ')">&#128465;</button></td></tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+function renderAutomationManage(container) {
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div class="page-title" style="font-size:18px;">Automation Rules</div><button class="glass-btn primary" onclick="openAutomationModal()">+ Add Rule</button></div>';
+  html += '<table class="data-table"><thead><tr><th>Source Field</th><th>Trigger</th><th>Target Field</th><th>Target Value</th><th>Actions</th></tr></thead><tbody>';
+  App.data.automationRules.forEach(r => {
+    html += '<tr><td>' + esc(r.source_field) + '</td><td>' + esc(r.trigger_value) + '</td><td>' + esc(r.target_field) + '</td><td>' + esc(r.target_value) + '</td><td class="actions"><button class="table-action delete" onclick="deleteAutomationRule(' + r.id + ')">&#128465;</button></td></tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+function renderConfig() {
+  const urlField = document.getElementById('gsheetUrl');
+  const sheetField = document.getElementById('sheetId');
+  const indicator = document.getElementById('configSourceIndicator');
+
+  urlField.value = App.config.gsheetUrl || '';
+  sheetField.value = App.config.sheetId || '';
+
+  const savedFav = localStorage.getItem('stratega_favicon');
+  if (savedFav) applyFavicon(savedFav);
+
+  if (isSecretConfigured()) {
+    urlField.disabled = true;
+    urlField.style.opacity = '0.5';
+    urlField.style.cursor = 'not-allowed';
+    indicator.innerHTML = '<span style="color:var(--accent-green);">&#128274; Secured via GitHub Secret</span> — URL is injected at build time and not stored in browser.';
+    indicator.style.background = 'rgba(102,187,106,0.1)';
+    indicator.style.border = '1px solid rgba(102,187,106,0.3)';
+  } else {
+    urlField.disabled = false;
+    urlField.style.opacity = '1';
+    urlField.style.cursor = 'text';
+    indicator.innerHTML = '<span style="color:var(--accent-orange);">&#128275; Manual Configuration</span> — URL is stored in browser localStorage.';
+    indicator.style.background = 'rgba(255,167,38,0.1)';
+    indicator.style.border = '1px solid rgba(255,167,38,0.3)';
+  }
+}
+function openTaskModal(taskId) {
+  const isEdit = !!taskId;
+  document.getElementById('taskModalTitle').textContent = isEdit ? 'Edit Task' : 'New Task';
+  document.getElementById('deleteTaskBtn').style.display = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('taskCommentsSection').style.display = isEdit ? 'block' : 'none';
+  document.getElementById('auditTrailSection').style.display = isEdit ? 'block' : 'none';
+  document.getElementById('taskProject').innerHTML = App.data.projects.map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('');
+  document.getElementById('taskStatus').innerHTML = App.data.statuses.map(s => '<option value="' + s.id + '">' + esc(s.name) + '</option>').join('');
+  document.getElementById('taskPriority').innerHTML = App.data.priorities.map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('');
+  document.getElementById('taskAssignee').innerHTML = '<option value="">Unassigned</option>' + App.data.users.map(u => '<option value="' + u.id + '">' + esc(u.name) + '</option>').join('');
+  document.getElementById('taskDepartment').innerHTML = '<option value="">None</option>' + App.data.departments.map(d => '<option value="' + d.id + '">' + esc(d.name) + '</option>').join('');
+  if (isEdit) {
+    const task = App.data.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    document.getElementById('taskId').value = task.id;
+    document.getElementById('taskTitle').value = task.title;
+    document.getElementById('taskProject').value = task.project_id || '';
+    document.getElementById('taskCategory').value = task.category || '';
+    document.getElementById('taskStatus').value = task.status_id || '';
+    document.getElementById('taskPriority').value = task.priority_id || '';
+    document.getElementById('taskAssignee').value = task.assigned_to || '';
+    document.getElementById('taskDepartment').value = task.department_id || '';
+    document.getElementById('taskPlannedStart').value = task.planned_start || '';
+    document.getElementById('taskPlannedFinish').value = task.planned_finish || '';
+    document.getElementById('taskPlannedWork').value = task.planned_work || 0;
+    document.getElementById('taskPlannedDuration').value = task.planned_duration || 0;
+    document.getElementById('taskActualStart').value = task.actual_start || '';
+    document.getElementById('taskActualFinish').value = task.actual_finish || '';
+    document.getElementById('taskActualWork').value = task.actual_work || 0;
+    document.getElementById('taskActualDuration').value = task.actual_duration || 0;
+    document.getElementById('taskBaseline1Start').value = task.baseline_1_start || '';
+    document.getElementById('taskBaseline1Finish').value = task.baseline_1_finish || '';
+    document.getElementById('taskBaseline2Start').value = task.baseline_2_start || '';
+    document.getElementById('taskBaseline2Finish').value = task.baseline_2_finish || '';
+    document.getElementById('taskComments').value = task.comments || '';
+    document.getElementById('taskComplete').checked = task.complete;
+    renderComments(taskId); renderAuditTrail(taskId);
+  } else {
+    document.getElementById('taskId').value = '';
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskCategory').value = '';
+    document.getElementById('taskPlannedStart').value = '';
+    document.getElementById('taskPlannedFinish').value = '';
+    document.getElementById('taskPlannedWork').value = 0;
+    document.getElementById('taskPlannedDuration').value = 0;
+    document.getElementById('taskActualStart').value = '';
+    document.getElementById('taskActualFinish').value = '';
+    document.getElementById('taskActualWork').value = 0;
+    document.getElementById('taskActualDuration').value = 0;
+    document.getElementById('taskBaseline1Start').value = '';
+    document.getElementById('taskBaseline1Finish').value = '';
+    document.getElementById('taskBaseline2Start').value = '';
+    document.getElementById('taskBaseline2Finish').value = '';
+    document.getElementById('taskComments').value = '';
+    document.getElementById('taskComplete').checked = false;
+  }
+  document.getElementById('taskModal').classList.add('open');
+}
+function closeTaskModal() { document.getElementById('taskModal').classList.remove('open'); }
+function saveTask() {
+  const id = document.getElementById('taskId').value;
+  const isEdit = !!id;
+  const taskData = {
+    title: document.getElementById('taskTitle').value.trim(),
+    project_id: parseInt(document.getElementById('taskProject').value) || null,
+    category: document.getElementById('taskCategory').value.trim(),
+    status_id: parseInt(document.getElementById('taskStatus').value) || null,
+    priority_id: parseInt(document.getElementById('taskPriority').value) || null,
+    assigned_to: parseInt(document.getElementById('taskAssignee').value) || null,
+    department_id: parseInt(document.getElementById('taskDepartment').value) || null,
+    planned_start: document.getElementById('taskPlannedStart').value || null,
+    planned_finish: document.getElementById('taskPlannedFinish').value || null,
+    planned_work: parseFloat(document.getElementById('taskPlannedWork').value) || 0,
+    planned_duration: parseInt(document.getElementById('taskPlannedDuration').value) || 0,
+    actual_start: document.getElementById('taskActualStart').value || null,
+    actual_finish: document.getElementById('taskActualFinish').value || null,
+    actual_work: parseFloat(document.getElementById('taskActualWork').value) || 0,
+    actual_duration: parseInt(document.getElementById('taskActualDuration').value) || 0,
+    baseline_1_start: document.getElementById('taskBaseline1Start').value || null,
+    baseline_1_finish: document.getElementById('taskBaseline1Finish').value || null,
+    baseline_2_start: document.getElementById('taskBaseline2Start').value || null,
+    baseline_2_finish: document.getElementById('taskBaseline2Finish').value || null,
+    comments: document.getElementById('taskComments').value,
+    complete: document.getElementById('taskComplete').checked
+  };
+  if (!taskData.title) { showToast('Title is required', 'error'); return; }
+  if (isEdit) {
+    const task = App.data.tasks.find(t => t.id == id);
+    if (!task) return;
+    if (!canEdit(task)) { showToast('Permission denied', 'error'); return; }
+    Object.assign(task, taskData);
+    evaluateAutomation(task);
+    logAudit(task.id, 'Task updated');
+  } else {
+    const newId = Math.max(...App.data.tasks.map(t => t.id), 0) + 1;
+    const newTask = { id: newId, ...taskData };
+    App.data.tasks.push(newTask);
+    evaluateAutomation(newTask);
+    logAudit(newId, 'Task created');
+  }
+  saveToStorage(); syncToGoogleSheets(); closeTaskModal(); renderAll();
+  showToast(isEdit ? 'Task updated' : 'Task created', 'success');
+}
+function deleteTask(taskId) {
+  if (!taskId) taskId = document.getElementById('taskId').value;
+  const task = App.data.tasks.find(t => t.id == taskId);
+  if (!task) return;
+  if (!canEdit(task)) { showToast('Permission denied', 'error'); return; }
+  if (!confirm('Delete this task?')) return;
+  App.data.tasks = App.data.tasks.filter(t => t.id != taskId);
+  App.data.comments = App.data.comments.filter(c => c.task_id != taskId);
+  saveToStorage(); syncToGoogleSheets(); closeTaskModal(); renderAll();
+  showToast('Task deleted', 'success');
+}
+
+function renderComments(taskId) {
+  const list = document.getElementById('commentsList');
+  const comments = App.data.comments.filter(c => c.task_id == taskId).sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+  if (comments.length === 0) { list.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:8px 0;">No comments yet</div>'; return; }
+  list.innerHTML = comments.map(c => {
+    const user = App.data.users.find(u => u.id === c.user_id);
+    return '<div class="comment-item"><div class="comment-header"><span class="comment-author">' + esc(user?.name || 'Unknown') + '</span><span class="comment-time">' + timeAgo(c.created_at) + '</span></div><div class="comment-text">' + esc(c.text) + '</div></div>';
+  }).join('');
+}
+function addComment() {
+  const taskId = document.getElementById('taskId').value;
+  const text = document.getElementById('newComment').value.trim();
+  if (!text || !taskId) return;
+  const newId = Math.max(...App.data.comments.map(c => c.id), 0) + 1;
+  App.data.comments.push({ id: newId, task_id: parseInt(taskId), user_id: App.currentUser.id, text: text, created_at: new Date().toISOString() });
+  document.getElementById('newComment').value = '';
+  saveToStorage(); syncToGoogleSheets(); renderComments(taskId); renderKanban();
+  showToast('Comment added', 'success');
+}
+function renderAuditTrail(taskId) {
+  const list = document.getElementById('auditList');
+  const logs = App.data.auditLogs.filter(l => l.task_id == taskId).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 20);
+  if (logs.length === 0) { list.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:8px 0;">No audit entries</div>'; return; }
+  list.innerHTML = logs.map(l => '<div class="audit-item"><span class="audit-action">' + esc(l.action) + '</span><span class="audit-time">' + timeAgo(l.timestamp) + '</span></div>').join('');
+}
+function logAudit(taskId, action) {
+  const newId = Math.max(...App.data.auditLogs.map(l => l.id), 0) + 1;
+  App.data.auditLogs.push({ id: newId, task_id: taskId, action: action, user_id: App.currentUser?.id, timestamp: new Date().toISOString() });
+}
+function openUserModal(userId) {
+  const isEdit = !!userId;
+  document.getElementById('userModalTitle').textContent = isEdit ? 'Edit User' : 'Add User';
+  document.getElementById('deleteUserBtn').style.display = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('userProject').innerHTML = '<option value="">None</option>' + App.data.projects.map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('');
+  document.getElementById('userDeptCheckboxes').innerHTML = App.data.departments.map(d => '<label style="display:flex;align-items:center;gap:6px;margin:4px 0;font-size:13px;color:var(--text-secondary);cursor:pointer;"><input type="checkbox" value="' + d.id + '" class="user-dept-check"> ' + esc(d.name) + '</label>').join('');
+  document.getElementById('userProjectCheckboxes').innerHTML = App.data.projects.map(p => '<label style="display:flex;align-items:center;gap:6px;margin:4px 0;font-size:13px;color:var(--text-secondary);cursor:pointer;"><input type="checkbox" value="' + p.id + '" class="user-project-check"> ' + esc(p.name) + '</label>').join('');
+  if (isEdit) {
+    const user = App.data.users.find(u => u.id === userId);
+    if (!user) return;
+    document.getElementById('userId').value = user.id;
+    document.getElementById('userNameInput').value = user.name;
+    document.getElementById('userRoleInput').value = user.role;
+    document.getElementById('userPin').value = '';
+    document.getElementById('userProject').value = user.project_id || '';
+    document.querySelectorAll('.user-dept-check').forEach(cb => { cb.checked = (user.departments || []).includes(parseInt(cb.value)); });
+    document.querySelectorAll('.user-project-check').forEach(cb => { cb.checked = (user.projects || []).includes(parseInt(cb.value)); });
+  } else {
+    document.getElementById('userId').value = '';
+    document.getElementById('userNameInput').value = '';
+    document.getElementById('userRoleInput').value = 'User';
+    document.getElementById('userPin').value = '';
+    document.getElementById('userProject').value = '';
+    document.querySelectorAll('.user-dept-check').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.user-project-check').forEach(cb => cb.checked = false);
+  }
+  document.getElementById('userModal').classList.add('open');
+}
+function closeUserModal() { document.getElementById('userModal').classList.remove('open'); }
+function saveUser() {
+  const id = document.getElementById('userId').value;
+  const isEdit = !!id;
+  const name = document.getElementById('userNameInput').value.trim();
+  const role = document.getElementById('userRoleInput').value;
+  const pin = document.getElementById('userPin').value;
+  const projectId = document.getElementById('userProject').value;
+  const depts = Array.from(document.querySelectorAll('.user-dept-check:checked')).map(cb => parseInt(cb.value));
+  const projs = Array.from(document.querySelectorAll('.user-project-check:checked')).map(cb => parseInt(cb.value));
+  if (!name) { showToast('Name is required', 'error'); return; }
+  if (isEdit) {
+    const user = App.data.users.find(u => u.id == id);
+    if (!user) return;
+    user.name = name; user.role = role; user.project_id = projectId || null;
+    user.departments = depts; user.projects = projs;
+    if (pin) user.pin_hash = pin;
+  } else {
+    if (!pin || pin.length !== 4) { showToast('4-digit PIN required', 'error'); return; }
+    const newId = Math.max(...App.data.users.map(u => u.id), 0) + 1;
+    App.data.users.push({ id: newId, name, role, project_id: projectId || null, pin_hash: pin, departments: depts, projects: projs });
+  }
+  saveToStorage(); syncToGoogleSheets(); closeUserModal(); renderTeam();
+  showToast(isEdit ? 'User updated' : 'User created', 'success');
+}
+function deleteUser(userId) {
+  if (!userId) userId = document.getElementById('userId').value;
+  if (!confirm('Delete this user?')) return;
+  App.data.users = App.data.users.filter(u => u.id != userId);
+  App.data.tasks.forEach(t => { if (t.assigned_to == userId) t.assigned_to = null; });
+  saveToStorage(); syncToGoogleSheets(); closeUserModal(); renderTeam();
+  showToast('User deleted', 'success');
+}
+function openStatusModal(statusId) {
+  document.getElementById('statusId').value = statusId || '';
+  if (statusId) {
+    const s = App.data.statuses.find(st => st.id === statusId);
+    document.getElementById('statusName').value = s.name;
+    document.getElementById('statusSortOrder').value = s.sort_order || 0;
+    document.querySelectorAll('.color-option').forEach(c => c.classList.toggle('selected', c.dataset.color === s.color));
+  } else {
+    document.getElementById('statusName').value = '';
+    document.getElementById('statusSortOrder').value = App.data.statuses.length;
+    document.querySelectorAll('.color-option').forEach(c => c.classList.remove('selected'));
+    document.querySelector('.color-option').classList.add('selected');
+  }
+  document.getElementById('statusModal').classList.add('open');
+}
+function closeStatusModal() { document.getElementById('statusModal').classList.remove('open'); }
+function saveStatus() {
+  const id = document.getElementById('statusId').value;
+  const name = document.getElementById('statusName').value.trim();
+  const sortOrder = parseInt(document.getElementById('statusSortOrder').value) || 0;
+  const color = document.querySelector('.color-option.selected')?.dataset.color || '#4fc3f7';
+  if (!name) { showToast('Name is required', 'error'); return; }
+  if (id) {
+    const s = App.data.statuses.find(st => st.id == id);
+    if (s) { s.name = name; s.color = color; s.sort_order = sortOrder; }
+  } else {
+    const newId = Math.max(...App.data.statuses.map(s => s.id), 0) + 1;
+    App.data.statuses.push({ id: newId, name, color, sort_order: sortOrder });
+  }
+  saveToStorage(); syncToGoogleSheets(); closeStatusModal(); renderManage(); renderAll();
+  showToast('Status saved', 'success');
+}
+function deleteStatus(id) {
+  if (!confirm('Delete this status?')) return;
+  App.data.statuses = App.data.statuses.filter(s => s.id !== id);
+  saveToStorage(); syncToGoogleSheets(); renderManage(); renderAll();
+  showToast('Status deleted', 'success');
+}
+document.querySelectorAll('.color-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    document.querySelectorAll('.color-option').forEach(c => c.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+function evaluateAutomation(task) {
+  App.data.automationRules.forEach(rule => {
+    const currentValue = String(task[rule.source_field] || '');
+    if (currentValue === String(rule.trigger_value)) {
+      const field = rule.target_field;
+      const val = rule.target_value;
+      if (field === 'complete') {
+        task.complete = val.toLowerCase() === 'true';
+      } else if (val.toUpperCase().startsWith('TODAY')) {
+        const computedDate = new Date();
+        if (val.includes('+') || val.includes('-')) {
+          const match = val.match(/TODAY\s*([\+\-])\s*(\d+)/i);
+          if (match) {
+            const operator = match[1]; const amount = parseInt(match[2], 10);
+            if (operator === '+') computedDate.setDate(computedDate.getDate() + amount);
+            if (operator === '-') computedDate.setDate(computedDate.getDate() - amount);
+          }
+        }
+        task[field] = computedDate.toISOString().split('T')[0];
+      } else {
+        task[field] = val;
+      }
+    }
+  });
+}
+
+function openDepartmentModal(deptId) {
+  const name = deptId ? (App.data.departments.find(d => d.id === deptId)?.name || '') : prompt(deptId ? 'Rename department:' : 'New department name:');
+  if (name === null) return;
+  const trimmed = (typeof name === 'string' ? name : '').trim();
+  if (!trimmed) return;
+  if (deptId) {
+    const d = App.data.departments.find(x => x.id === deptId);
+    if (d) d.name = trimmed;
+  } else {
+    const newId = Math.max(...App.data.departments.map(d => d.id), 0) + 1;
+    App.data.departments.push({ id: newId, name: trimmed, project_id: null, parent_department_id: null });
+  }
+  saveToStorage(); syncToGoogleSheets(); renderManage(); renderAll();
+  showToast('Department saved', 'success');
+}
+function deleteDepartment(id) {
+  if (!confirm('Delete this department?')) return;
+  App.data.departments = App.data.departments.filter(d => d.id !== id);
+  saveToStorage(); syncToGoogleSheets(); renderManage(); renderAll();
+  showToast('Department deleted', 'success');
+}
+function openProjectModal(projId) {
+  const name = projId ? (App.data.projects.find(p => p.id === projId)?.name || '') : prompt(projId ? 'Rename project:' : 'New project name:');
+  if (name === null) return;
+  const trimmed = (typeof name === 'string' ? name : '').trim();
+  if (!trimmed) return;
+  if (projId) {
+    const p = App.data.projects.find(x => x.id === projId);
+    if (p) p.name = trimmed;
+  } else {
+    const newId = Math.max(...App.data.projects.map(p => p.id), 0) + 1;
+    App.data.projects.push({ id: newId, name: trimmed });
+  }
+  saveToStorage(); syncToGoogleSheets(); renderManage(); renderAll();
+  showToast('Project saved', 'success');
+}
+function deleteProject(id) {
+  if (!confirm('Delete this project? All associated tasks will be affected.')) return;
+  App.data.projects = App.data.projects.filter(p => p.id !== id);
+  saveToStorage(); syncToGoogleSheets(); renderManage(); renderAll();
+  showToast('Project deleted', 'success');
+}
+function openPriorityModal(prioId) {
+  const name = prioId ? (App.data.priorities.find(p => p.id === prioId)?.name || '') : prompt(prioId ? 'Rename priority:' : 'New priority name:');
+  if (name === null) return;
+  const trimmed = (typeof name === 'string' ? name : '').trim();
+  if (!trimmed) return;
+  if (prioId) {
+    const p = App.data.priorities.find(x => x.id === prioId);
+    if (p) p.name = trimmed;
+  } else {
+    const newId = Math.max(...App.data.priorities.map(p => p.id), 0) + 1;
+    App.data.priorities.push({ id: newId, name: trimmed, color: '#4fc3f7' });
+  }
+  saveToStorage(); syncToGoogleSheets(); renderManage(); renderAll();
+  showToast('Priority saved', 'success');
+}
+function deletePriority(id) {
+  if (!confirm('Delete this priority?')) return;
+  App.data.priorities = App.data.priorities.filter(p => p.id !== id);
+  saveToStorage(); syncToGoogleSheets(); renderManage(); renderAll();
+  showToast('Priority deleted', 'success');
+}
+function openAutomationModal() {
+  const source = prompt('Source field (e.g. status_id):');
+  if (!source) return;
+  const trigger = prompt('Trigger value:');
+  if (trigger === null) return;
+  const target = prompt('Target field (e.g. complete):');
+  if (!target) return;
+  const value = prompt('Target value (e.g. true, TODAY, TODAY+1):');
+  if (value === null) return;
+  const newId = Math.max(...App.data.automationRules.map(r => r.id), 0) + 1;
+  App.data.automationRules.push({ id: newId, source_field: source, trigger_value: trigger, target_field: target, target_value: value });
+  saveToStorage(); syncToGoogleSheets(); renderManage();
+  showToast('Rule added', 'success');
+}
+function deleteAutomationRule(id) {
+  if (!confirm('Delete this rule?')) return;
+  App.data.automationRules = App.data.automationRules.filter(r => r.id !== id);
+  saveToStorage(); syncToGoogleSheets(); renderManage();
+  showToast('Rule deleted', 'success');
+}
+function canEdit(task) {
+  if (!App.currentUser) return false;
+  if (App.currentUser.role === 'Admin') return true;
+  const userProjects = App.currentUser.projects || [App.currentUser.project_id].filter(Boolean);
+  if (App.currentUser.role === 'Manager') return userProjects.includes(task.project_id);
+  return task.assigned_to === App.currentUser.id;
+}
+function getFilteredTasks() {
+  let tasks = App.data.tasks;
+  if (App.currentProject !== 'all') tasks = tasks.filter(t => t.project_id == App.currentProject);
+  if (App.currentUser?.role === 'User') {
+    const userProjects = App.currentUser.projects || [App.currentUser.project_id].filter(Boolean);
+    tasks = tasks.filter(t => userProjects.includes(t.project_id));
+  }
+  return tasks;
+}
+function getStatusName(id) {
+  return App.data.statuses.find(s => s.id === id)?.name || 'Unknown';
+}
+function updateSyncStatus() {
+  const dot = document.getElementById('syncDot');
+  const status = document.getElementById('syncStatus');
+  if (App.config.gsheetUrl) { dot.style.background = 'var(--accent-green)'; status.textContent = 'Connected to Google Sheets'; }
+  else { dot.style.background = 'var(--accent-orange)'; status.textContent = 'Local Mode (no sync)'; }
+}
+function syncToGoogleSheets() {
+  const url = App.config.gsheetUrl;
+  if (!url || url.includes('STRATEGA_WEBAPP_URL')) {
+    console.log('Sync skipped: no valid URL configured');
+    return;
+  }
+  console.log('Syncing to:', url);
+  const payload = { action: 'sync', data: App.data, sheetId: App.config.sheetId };
+  fetch(url, { 
+    method: 'POST', 
+    body: JSON.stringify(payload), 
+    headers: { 'Content-Type': 'application/json' },
+    mode: 'cors'
+  })
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(d => { 
+      if (d.success) {
+        showToast('Synced to Google Sheets', 'success');
+        console.log('Sync success:', d.message);
+      } else {
+        showToast('Sync failed: ' + (d.error || 'Unknown error'), 'error');
+        console.error('Sync error:', d.error);
+      }
+    })
+    .catch(e => {
+      showToast('Sync failed: ' + e.message, 'error');
+      console.error('Sync failed:', e);
+    });
+}
+function testConnection() {
+  const url = isSecretConfigured() ? App.config.gsheetUrl : document.getElementById('gsheetUrl').value.trim();
+  if (!url) { showToast('Please enter a URL', 'error'); return; }
+  showToast('Testing connection...', 'info');
+  fetch(url + '?action=test', { method: 'GET' })
+    .then(r => r.json())
+    .then(d => { showToast('Connection successful!', 'success'); })
+    .catch(e => showToast('Connection failed. Check URL.', 'error'));
+}
+function saveConfig() {
+  const manualUrl = document.getElementById('gsheetUrl').value.trim();
+  if (manualUrl && !manualUrl.includes('STRATEGA_WEBAPP_URL')) {
+    App.config.gsheetUrl = manualUrl;
+  }
+  App.config.sheetId = document.getElementById('sheetId').value.trim();
+  saveToStorage(); updateSyncStatus();
+  showToast('Configuration saved', 'success');
+  console.log('Config saved. URL:', App.config.gsheetUrl);
+}
+function exportData() {
+  const blob = new Blob([JSON.stringify(App.data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'stratega-data-' + new Date().toISOString().split('T')[0] + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Data exported', 'success');
+}
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.tasks && data.users) {
+        App.data = data;
+        saveToStorage(); renderAll();
+        showToast('Data imported successfully', 'success');
+      } else {
+        showToast('Invalid data format', 'error');
+      }
+    } catch(err) { showToast('Error parsing file', 'error'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+function resetData() {
+  if (!confirm('Reset all data to demo data? This cannot be undone.')) return;
+  localStorage.removeItem('stratega_data');
+  App.data = { users: [], projects: [], departments: [], statuses: [], priorities: [], tasks: [], comments: [], auditLogs: [], automationRules: [] };
+  seedIfEmpty(); renderAll();
+  showToast('Data reset to demo', 'success');
+}
+function getInitials(name) {
+  return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+}
+function esc(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+function timeAgo(dateStr) {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return minutes + 'm ago';
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours + 'h ago';
+  const days = Math.floor(hours / 24);
+  if (days < 30) return days + 'd ago';
+  const months = Math.floor(days / 30);
+  return months + 'mo ago';
+}
+
+function uploadFavicon(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    localStorage.setItem('stratega_favicon', dataUrl);
+    applyFavicon(dataUrl);
+    showToast('Favicon updated', 'success');
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+function resetFavicon() {
+  localStorage.removeItem('stratega_favicon');
+  applyFavicon(null);
+  showToast('Favicon reset to default', 'success');
+}
+function applyFavicon(dataUrl) {
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.head.appendChild(link);
+  }
+  if (dataUrl) {
+    link.href = dataUrl;
+    document.getElementById('faviconPreview').innerHTML = '<img src="' + dataUrl + '" style="width:48px;height:48px;border-radius:12px;object-fit:cover;">';
+  } else {
+    link.href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%234fc3f7'/%3E%3Ctext x='50' y='68' font-size='55' font-weight='700' text-anchor='middle' fill='white' font-family='Arial'%3ES%3C/text%3E%3C/svg%3E";
+    document.getElementById('faviconPreview').textContent = 'S';
+  }
+}
+
+function showToast(message, type) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  const icon = type === 'success' ? '&#10003;' : type === 'error' ? '&#10007;' : '&#9432;';
+  toast.innerHTML = '<span>' + icon + '</span><span>' + esc(message) + '</span>';
+  container.appendChild(toast);
+  setTimeout(() => { toast.remove(); }, 4000);
+}
+</script>
+</body>
+</html>
