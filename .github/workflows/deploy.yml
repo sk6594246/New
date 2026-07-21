@@ -7,9 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Inject Web App URL
         run: |
-          sed -i 's|__STRATEGA_WEBAPP_URL__|${{ secrets.STRATEGA_WEBAPP_URL }}|g' index.html
+          # Use # as delimiter since URL contains /
+          sed -i "s#__STRATEGA_WEBAPP_URL__#${{ secrets.STRATEGA_WEBAPP_URL }}#g" index.html
+          # Verify replacement worked
+          grep -q "script.google.com" index.html && echo "URL injected successfully" || echo "URL injection FAILED"
+          # Show first few lines of meta tag for debugging
+          grep "stratega-webapp-url" index.html | head -1
+          
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
