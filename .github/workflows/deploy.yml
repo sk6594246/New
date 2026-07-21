@@ -2,6 +2,7 @@ name: Deploy Stratega PM
 on:
   push:
     branches: [main]
+    workflow_dispatch: //added line
 jobs:
   deploy:
     runs-on: ubuntu-latest
