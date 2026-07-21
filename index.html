@@ -1040,8 +1040,12 @@ function loadFromStorage() {
   if (savedConfig) { 
     try { 
       const parsed = JSON.parse(savedConfig);
-      // Only load sheetId from localStorage; gsheetUrl comes from secret if available
       App.config.sheetId = parsed.sheetId || '';
+      // Load gsheetUrl from localStorage only if no secret is configured
+      // Secret detection runs first via detectSecretUrl() in App.config initialization
+      if (!isSecretConfigured() && parsed.gsheetUrl) {
+        App.config.gsheetUrl = parsed.gsheetUrl;
+      }
     } catch(e) {} 
   }
   const savedUser = localStorage.getItem('stratega_user');
@@ -1916,12 +1920,36 @@ function updateSyncStatus() {
   else { dot.style.background = 'var(--accent-orange)'; status.textContent = 'Local Mode (no sync)'; }
 }
 function syncToGoogleSheets() {
-  if (!App.config.gsheetUrl) return;
+  const url = App.config.gsheetUrl;
+  if (!url || url.includes('STRATEGA_WEBAPP_URL')) {
+    console.log('Sync skipped: no valid URL configured');
+    return;
+  }
+  console.log('Syncing to:', url);
   const payload = { action: 'sync', data: App.data, sheetId: App.config.sheetId };
-  fetch(App.config.gsheetUrl, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } })
-    .then(r => r.json())
-    .then(d => { if (d.success) showToast('Synced to Google Sheets', 'success'); })
-    .catch(e => console.log('Sync failed:', e));
+  fetch(url, { 
+    method: 'POST', 
+    body: JSON.stringify(payload), 
+    headers: { 'Content-Type': 'application/json' },
+    mode: 'cors'
+  })
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(d => { 
+      if (d.success) {
+        showToast('Synced to Google Sheets', 'success');
+        console.log('Sync success:', d.message);
+      } else {
+        showToast('Sync failed: ' + (d.error || 'Unknown error'), 'error');
+        console.error('Sync error:', d.error);
+      }
+    })
+    .catch(e => {
+      showToast('Sync failed: ' + e.message, 'error');
+      console.error('Sync failed:', e);
+    });
 }
 function testConnection() {
   const url = isSecretConfigured() ? App.config.gsheetUrl : document.getElementById('gsheetUrl').value.trim();
@@ -1933,12 +1961,14 @@ function testConnection() {
     .catch(e => showToast('Connection failed. Check URL.', 'error'));
 }
 function saveConfig() {
-  if (!isSecretConfigured()) {
-    App.config.gsheetUrl = document.getElementById('gsheetUrl').value.trim();
+  const manualUrl = document.getElementById('gsheetUrl').value.trim();
+  if (manualUrl && !manualUrl.includes('STRATEGA_WEBAPP_URL')) {
+    App.config.gsheetUrl = manualUrl;
   }
   App.config.sheetId = document.getElementById('sheetId').value.trim();
   saveToStorage(); updateSyncStatus();
   showToast('Configuration saved', 'success');
+  console.log('Config saved. URL:', App.config.gsheetUrl);
 }
 function exportData() {
   const blob = new Blob([JSON.stringify(App.data, null, 2)], { type: 'application/json' });
