@@ -592,6 +592,14 @@ html, body {
 /* Print */
 @media print { .sidebar, .top-bar, .kanban-toolbar, .gantt-toolbar { display: none !important; } .gantt-container { overflow: visible; border: none; } body { background: white; color: black; } }
 </style>
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%234fc3f7'/%3E%3Ctext x='50' y='68' font-size='55' font-weight='700' text-anchor='middle' fill='white' font-family='Arial'%3ES%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="favicon.png">
+<meta name="theme-color" content="#0f172a">
+<!-- Build-time secret injection placeholder -->
+<meta name="stratega-webapp-url" content="__STRATEGA_WEBAPP_URL__">
+<base target="_blank">
 </head>
 <body>
 
@@ -997,19 +1005,45 @@ const App = {
   currentUser: null, currentView: 'dashboard', currentProject: 'all',
   kanbanFilter: 'all', kanbanMineOnly: false, ganttZoom: 'day',
   manageTab: 'statuses', draggedTask: null,
-  config: { gsheetUrl: '', sheetId: '' },
+  config: { gsheetUrl: detectSecretUrl(), sheetId: '' },
   data: { users: [], projects: [], departments: [], statuses: [], priorities: [], tasks: [], comments: [], auditLogs: [], automationRules: [] }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
   loadFromStorage(); seedIfEmpty(); setupPinPad(); updateSyncStatus(); renderAll();
+  const savedFav = localStorage.getItem('stratega_favicon');
+  if (savedFav) applyFavicon(savedFav);
 });
 
+
+function detectSecretUrl() {
+  // Check if the URL was injected by GitHub Actions / build process
+  const injected = '__STRATEGA_WEBAPP_URL__';
+  if (injected && !injected.includes('STRATEGA_WEBAPP_URL')) {
+    return injected;
+  }
+  // Check for a meta tag injected at build time
+  const metaTag = document.querySelector('meta[name="stratega-webapp-url"]');
+  if (metaTag && metaTag.content && !metaTag.content.includes('STRATEGA_WEBAPP_URL')) {
+    return metaTag.content;
+  }
+  return '';
+}
+function isSecretConfigured() {
+  const url = App.config.gsheetUrl;
+  return url && url.length > 10 && !url.includes('STRATEGA_WEBAPP_URL');
+}
 function loadFromStorage() {
   const saved = localStorage.getItem('stratega_data');
   if (saved) { try { App.data = JSON.parse(saved); } catch(e) {} }
   const savedConfig = localStorage.getItem('stratega_config');
-  if (savedConfig) { try { App.config = JSON.parse(savedConfig); } catch(e) {} }
+  if (savedConfig) { 
+    try { 
+      const parsed = JSON.parse(savedConfig);
+      // Only load sheetId from localStorage; gsheetUrl comes from secret if available
+      App.config.sheetId = parsed.sheetId || '';
+    } catch(e) {} 
+  }
   const savedUser = localStorage.getItem('stratega_user');
   if (savedUser) { try { App.currentUser = JSON.parse(savedUser); showApp(); } catch(e) {} }
 }
@@ -1017,7 +1051,12 @@ function loadFromStorage() {
 function saveToStorage() {
   localStorage.setItem('stratega_data', JSON.stringify(App.data));
   if (App.currentUser) localStorage.setItem('stratega_user', JSON.stringify(App.currentUser));
-  localStorage.setItem('stratega_config', JSON.stringify(App.config));
+  // Don't save gsheetUrl to localStorage if it came from a secret
+  const configToSave = { ...App.config };
+  if (isSecretConfigured()) {
+    configToSave.gsheetUrl = '';
+  }
+  localStorage.setItem('stratega_config', JSON.stringify(configToSave));
 }
 
 function seedIfEmpty() {
@@ -1119,6 +1158,11 @@ function showApp() {
   if (App.currentUser.role === 'Admin') {
     document.getElementById('adminNavSection').style.display = 'block';
     document.getElementById('addUserBtn').style.display = 'inline-flex';
+  }
+  // Hide Config nav item if secret is configured
+  const configNav = document.querySelector('.nav-item[data-view="config"]');
+  if (configNav && isSecretConfigured()) {
+    configNav.style.display = 'none';
   }
   renderAll();
 }
@@ -1462,8 +1506,31 @@ function renderAutomationManage(container) {
   container.innerHTML = html;
 }
 function renderConfig() {
-  document.getElementById('gsheetUrl').value = App.config.gsheetUrl || '';
-  document.getElementById('sheetId').value = App.config.sheetId || '';
+  const urlField = document.getElementById('gsheetUrl');
+  const sheetField = document.getElementById('sheetId');
+  const indicator = document.getElementById('configSourceIndicator');
+
+  urlField.value = App.config.gsheetUrl || '';
+  sheetField.value = App.config.sheetId || '';
+
+  const savedFav = localStorage.getItem('stratega_favicon');
+  if (savedFav) applyFavicon(savedFav);
+
+  if (isSecretConfigured()) {
+    urlField.disabled = true;
+    urlField.style.opacity = '0.5';
+    urlField.style.cursor = 'not-allowed';
+    indicator.innerHTML = '<span style="color:var(--accent-green);">&#128274; Secured via GitHub Secret</span> — URL is injected at build time and not stored in browser.';
+    indicator.style.background = 'rgba(102,187,106,0.1)';
+    indicator.style.border = '1px solid rgba(102,187,106,0.3)';
+  } else {
+    urlField.disabled = false;
+    urlField.style.opacity = '1';
+    urlField.style.cursor = 'text';
+    indicator.innerHTML = '<span style="color:var(--accent-orange);">&#128275; Manual Configuration</span> — URL is stored in browser localStorage.';
+    indicator.style.background = 'rgba(255,167,38,0.1)';
+    indicator.style.border = '1px solid rgba(255,167,38,0.3)';
+  }
 }
 function openTaskModal(taskId) {
   const isEdit = !!taskId;
@@ -1857,7 +1924,7 @@ function syncToGoogleSheets() {
     .catch(e => console.log('Sync failed:', e));
 }
 function testConnection() {
-  const url = document.getElementById('gsheetUrl').value.trim();
+  const url = isSecretConfigured() ? App.config.gsheetUrl : document.getElementById('gsheetUrl').value.trim();
   if (!url) { showToast('Please enter a URL', 'error'); return; }
   showToast('Testing connection...', 'info');
   fetch(url + '?action=test', { method: 'GET' })
@@ -1866,7 +1933,9 @@ function testConnection() {
     .catch(e => showToast('Connection failed. Check URL.', 'error'));
 }
 function saveConfig() {
-  App.config.gsheetUrl = document.getElementById('gsheetUrl').value.trim();
+  if (!isSecretConfigured()) {
+    App.config.gsheetUrl = document.getElementById('gsheetUrl').value.trim();
+  }
   App.config.sheetId = document.getElementById('sheetId').value.trim();
   saveToStorage(); updateSyncStatus();
   showToast('Configuration saved', 'success');
@@ -1928,6 +1997,41 @@ function timeAgo(dateStr) {
   const months = Math.floor(days / 30);
   return months + 'mo ago';
 }
+
+function uploadFavicon(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    localStorage.setItem('stratega_favicon', dataUrl);
+    applyFavicon(dataUrl);
+    showToast('Favicon updated', 'success');
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+function resetFavicon() {
+  localStorage.removeItem('stratega_favicon');
+  applyFavicon(null);
+  showToast('Favicon reset to default', 'success');
+}
+function applyFavicon(dataUrl) {
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.head.appendChild(link);
+  }
+  if (dataUrl) {
+    link.href = dataUrl;
+    document.getElementById('faviconPreview').innerHTML = '<img src="' + dataUrl + '" style="width:48px;height:48px;border-radius:12px;object-fit:cover;">';
+  } else {
+    link.href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%234fc3f7'/%3E%3Ctext x='50' y='68' font-size='55' font-weight='700' text-anchor='middle' fill='white' font-family='Arial'%3ES%3C/text%3E%3C/svg%3E";
+    document.getElementById('faviconPreview').textContent = 'S';
+  }
+}
+
 function showToast(message, type) {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
