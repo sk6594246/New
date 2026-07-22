@@ -48,21 +48,49 @@
       overflow: hidden;
     }
 
-    /* Glass Components */
-    .glass { background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: var(--radius-md); }
-    .glass-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 8px 16px; color: var(--text-primary); cursor: pointer; transition: var(--transition); }
-    .glass-btn:hover { background: var(--glass-hover); }
-    .glass-btn.primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark)); border-color: transparent; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
 
-    /* Layout & Loading */
+    /* Glass Components */
+    .glass { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: var(--radius-md); }
+    .glass-card { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); padding: 20px; transition: var(--transition); }
+    .glass-card:hover { background: var(--glass-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .glass-input { background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text-primary); font-size: 14px; width: 100%; outline: none; transition: var(--transition); }
+    .glass-input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(79,195,247,0.15); }
+    .glass-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 10px 20px; color: var(--text-primary); font-size: 14px; font-weight: 500; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .glass-btn:hover { background: var(--glass-hover); transform: translateY(-1px); }
+    .glass-btn.primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark)); border-color: transparent; box-shadow: 0 4px 16px rgba(79,195,247,0.3); }
+
+    /* Layout */
     .app-shell { display: flex; height: 100vh; width: 100vw; }
-    .main-content { flex: 1; padding: 24px; overflow-y: auto; }
+    .sidebar { width: var(--sidebar-width); flex-shrink: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(30px); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; padding: 20px 16px; z-index: 100; }
+    .brand { display: flex; align-items: center; gap: 12px; padding: 0 8px 24px; border-bottom: 1px solid var(--glass-border); margin-bottom: 16px; }
+    .brand-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: white; }
+    .brand-text { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+    
+    .nav-section { margin-bottom: 8px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); margin-bottom: 2px; font-size: 14px; color: var(--text-secondary); }
+    .nav-item:hover { background: var(--glass-hover); color: var(--text-primary); }
+    .nav-item.active { background: var(--glass-active); color: var(--accent-blue); }
+
+    .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    .top-bar { height: var(--header-height); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; border-bottom: 1px solid var(--glass-border); background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); }
+    .content-area { flex: 1; overflow: auto; padding: 24px 28px; }
+
+    /* Login Screen */
+    .login-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #0f172a; z-index: 1000; }
+    .login-card { width: 380px; padding: 40px 32px; text-align: center; }
+    .login-error { color: var(--accent-red); font-size: 13px; margin-top: 12px; min-height: 20px; }
+
+    /* Views */
+    .view { display: none; }
+    .view.active { display: block; }
+    
+    /* Loading Overlay */
     .loading-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 3000; flex-direction: column; gap: 16px; }
     .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; font-size: 12px; margin-bottom: 16px; }
-    .status-badge.sheet { background: rgba(102,187,106,0.15); color: var(--accent-green); border: 1px solid rgba(102,187,106,0.3); }
-    .status-badge.demo { background: rgba(255,167,38,0.15); color: var(--accent-orange); border: 1px solid rgba(255,167,38,0.3); }
   </style>
 
   <meta name="stratega-webapp-url" content="https://script.google.com/macros/s/AKfycbxsyBXNDDGA3Pwo6KzMfmw4kn2KBG6dewKA8i5UqbpDWqIiY43-2FHBzjMoeT6kwyOP6A/exec">
@@ -70,152 +98,222 @@
 <body>
 
   <!-- Loading Overlay -->
-  <div id="loadingOverlay" class="loading-overlay">
+  <div id="loadingOverlay" class="loading-overlay" style="display:none;">
     <div class="spinner"></div>
-    <div id="loadingText" class="loading-text">Checking Google Sheet for existing data...</div>
+    <div id="loadingText" style="font-size: 14px; color: var(--text-secondary);">Authenticating & fetching sheet data...</div>
   </div>
 
-  <div class="app-shell">
-    <div class="main-content">
-      <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-        <h2>Stratega PM Dashboard</h2>
-        <button class="glass-btn primary" onclick="syncToGoogleSheet()">Sync Data to Sheet</button>
-      </header>
+  <!-- Login Screen -->
+  <div id="loginScreen" class="login-screen">
+    <div class="glass-card login-card">
+      <div class="brand-icon" style="margin: 0 auto 16px;">S</div>
+      <h2 style="margin-bottom: 6px;">Stratega PM</h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">Enter your User ID and PIN to access</p>
 
-      <div id="dataSourceBadge" class="status-badge demo">Data Source: Demo Data</div>
-
-      <div class="glass" style="padding: 20px;">
-        <h3>Projects Loaded</h3>
-        <ul id="projectList" style="margin-top: 10px; padding-left: 20px;"></ul>
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <input type="text" id="loginUserId" class="glass-input" placeholder="User ID (e.g. admin)" value="admin">
+        <input type="password" id="loginPin" class="glass-input" placeholder="PIN (e.g. 1234)" value="1234">
+        <button class="glass-btn primary" onclick="handleLogin()">Login to Dashboard</button>
       </div>
+      
+      <div id="loginError" class="login-error"></div>
     </div>
   </div>
 
+  <!-- Main App Shell -->
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">S</div>
+        <div>
+          <div class="brand-text">Stratega</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Project Manager</div>
+        </div>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-item active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+        <div class="nav-item" onclick="switchTab('kanban')">📋 Kanban Board</div>
+        <div class="nav-item" onclick="switchTab('team')">👥 Team Overview</div>
+      </nav>
+
+      <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--glass-border);">
+        <div style="font-size: 12px; color: var(--text-muted);">Logged in as:</div>
+        <div id="loggedUserName" style="font-weight: 600; font-size: 14px;">-</div>
+        <button class="glass-btn" style="width: 100%; margin-top: 12px; padding: 6px;" onclick="logout()">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <h3 id="currentViewTitle">Dashboard</h3>
+        <button class="glass-btn primary" onclick="syncStateToSheet()">Sync Changes to Sheet</button>
+      </header>
+
+      <div class="content-area">
+        <!-- Dashboard View -->
+        <div id="dashboardView" class="view active">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div class="glass-card">
+              <div style="font-size: 12px; color: var(--text-muted);">Total Projects</div>
+              <div id="statProjects" style="font-size: 28px; font-weight: 700;">0</div>
+            </div>
+            <div class="glass-card">
+              <div style="font-size: 12px; color: var(--text-muted);">Active Tasks</div>
+              <div id="statTasks" style="font-size: 28px; font-weight: 700;">0</div>
+            </div>
+          </div>
+
+          <div class="glass-card">
+            <h3>Projects from Google Sheet</h3>
+            <ul id="projectList" style="margin-top: 12px; padding-left: 20px;"></ul>
+          </div>
+        </div>
+
+        <!-- Kanban View -->
+        <div id="kanbanView" class="view">
+          <div class="glass-card">
+            <h3>Task Board</h3>
+            <div id="taskList" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+        </div>
+
+        <!-- Team View -->
+        <div id="teamView" class="view">
+          <div class="glass-card">
+            <h3>Team Members</h3>
+            <div id="teamList" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
   <script>
-    // System State & Demo Fallback
     const CONFIG = {
       webAppUrl: document.querySelector('meta[name="stratega-webapp-url"]')?.content || ''
     };
 
-    const DEMO_DATA = {
-      projects: [
-        { id: 'p1', name: 'Website Redesign', status: 'In Progress' },
-        { id: 'p2', name: 'Mobile App Launch', status: 'Planning' }
-      ],
-      tasks: [
-        { id: 't1', projectId: 'p1', title: 'Design Mockups', status: 'Completed' },
-        { id: 't2', projectId: 'p1', title: 'API Integration', status: 'In Progress' }
-      ]
-    };
-
-    let APP_STATE = {
+    let STATE = {
+      user: null,
       projects: [],
       tasks: [],
-      source: 'none'
+      team: []
     };
 
-    // Initialize Application
-    document.addEventListener('DOMContentLoaded', () => {
-      initApp();
-    });
+    async function handleLogin() {
+      const userId = document.getElementById('loginUserId').value.trim();
+      const pin = document.getElementById('loginPin').value.trim();
+      const errorDiv = document.getElementById('loginError');
 
-    async function initApp() {
-      showLoading(true, "Checking Google Sheet for data...");
-      
-      const sheetData = await fetchFromGoogleSheet();
-
-      if (sheetData && hasValidData(sheetData)) {
-        console.log("Sheet data found! Loading from Google Sheet...");
-        APP_STATE.projects = sheetData.projects || [];
-        APP_STATE.tasks = sheetData.tasks || [];
-        APP_STATE.source = 'Google Sheet';
-      } else {
-        console.log("No valid Sheet data found. Falling back to Demo Data.");
-        APP_STATE.projects = [...DEMO_DATA.projects];
-        APP_STATE.tasks = [...DEMO_DATA.tasks];
-        APP_STATE.source = 'Demo Data';
-      }
-
-      renderDashboard();
-      showLoading(false);
-    }
-
-    // Fetch GET Endpoint
-    async function fetchFromGoogleSheet() {
-      if (!CONFIG.webAppUrl) return null;
-      
-      try {
-        const response = await fetch(CONFIG.webAppUrl, { method: 'GET' });
-        const result = await response.json();
-        
-        if (result.status === 'success' && result.data) {
-          return result.data;
-        }
-      } catch (err) {
-        console.warn("Unable to fetch from Google Sheet:", err);
-      }
-      return null;
-    }
-
-    // Verify if returned data is non-empty
-    function hasValidData(data) {
-      if (!data) return false;
-      const hasProjects = Array.isArray(data.projects) && data.projects.length > 0;
-      const hasTasks = Array.isArray(data.tasks) && data.tasks.length > 0;
-      return hasProjects || hasTasks;
-    }
-
-    // Save/Sync POST Endpoint
-    async function syncToGoogleSheet() {
-      if (!CONFIG.webAppUrl) {
-        alert("Web App URL not configured!");
+      if (!userId || !pin) {
+        errorDiv.textContent = 'Please enter both User ID and PIN';
         return;
       }
-      showLoading(true, "Saving data to Google Sheet...");
+
+      errorDiv.textContent = '';
+      showLoading(true, "Authenticating with Google Sheet...");
 
       try {
-        const payload = {
-          projects: APP_STATE.projects,
-          tasks: APP_STATE.tasks
-        };
+        const url = `${CONFIG.webAppUrl}?userId=${encodeURIComponent(userId)}&pin=${encodeURIComponent(pin)}`;
+        const res = await fetch(url);
+        const result = await res.json();
 
-        const response = await fetch(CONFIG.webAppUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        });
+        if (result.status === 'success') {
+          STATE.user = result.data.currentUser;
+          STATE.projects = result.data.projects || [];
+          STATE.tasks = result.data.tasks || [];
+          STATE.team = result.data.team || [];
 
-        const res = await response.json();
-        if (res.status === 'success') {
-          alert('Successfully saved to Google Sheet!');
-          APP_STATE.source = 'Google Sheet';
-          renderDashboard();
+          document.getElementById('loginScreen').style.display = 'none';
+          document.getElementById('loggedUserName').textContent = `${STATE.user.Name} (${STATE.user.Role})`;
+          
+          renderAllViews();
         } else {
-          alert('Failed to save data: ' + res.message);
+          errorDiv.textContent = result.message || 'Authentication failed.';
         }
       } catch (err) {
-        alert('Error saving data to sheet: ' + err.message);
+        errorDiv.textContent = 'Failed to connect to backend sheet.';
+        console.error(err);
       } finally {
         showLoading(false);
       }
     }
 
-    // Render Views
-    function renderDashboard() {
-      const badge = document.getElementById('dataSourceBadge');
-      badge.textContent = `Data Source: ${APP_STATE.source}`;
-      badge.className = `status-badge ${APP_STATE.source === 'Google Sheet' ? 'sheet' : 'demo'}`;
+    function renderAllViews() {
+      // Stats
+      document.getElementById('statProjects').textContent = STATE.projects.length;
+      document.getElementById('statTasks').textContent = STATE.tasks.length;
 
-      const projectList = document.getElementById('projectList');
-      projectList.innerHTML = APP_STATE.projects
-        .map(p => `<li><strong>${p.name}</strong> — <em>${p.status}</em></li>`)
-        .join('');
+      // Project List
+      const projList = document.getElementById('projectList');
+      projList.innerHTML = STATE.projects.map(p => `<li><strong>${p.name}</strong> — ${p.status} (${p.progress || '0%'})</li>`).join('');
+
+      // Task List
+      const taskList = document.getElementById('taskList');
+      taskList.innerHTML = STATE.tasks.map(t => `<div class="glass" style="padding: 10px;"><strong>${t.title}</strong> [${t.priority}] — Assiged: ${t.assignee}</div>`).join('');
+
+      // Team List
+      const teamList = document.getElementById('teamList');
+      teamList.innerHTML = STATE.team.map(m => `<div class="glass" style="padding: 10px;"><strong>${m.name}</strong> (${m.role}) - ${m.dept}</div>`).join('');
+    }
+
+    async function syncStateToSheet() {
+      if (!CONFIG.webAppUrl) return;
+      showLoading(true, "Syncing changes to Google Sheet...");
+
+      try {
+        const payload = {
+          Projects: STATE.projects,
+          Tasks: STATE.tasks,
+          Team: STATE.team
+        };
+
+        const res = await fetch(CONFIG.webAppUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+        if (result.status === 'success') {
+          alert('Data successfully synced to Google Sheet!');
+        } else {
+          alert('Sync failed: ' + result.message);
+        }
+      } catch (e) {
+        alert('Error syncing to sheet: ' + e.message);
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+
+      if (tab === 'dashboard') {
+        document.getElementById('dashboardView').classList.add('active');
+        document.getElementById('currentViewTitle').textContent = 'Dashboard';
+      } else if (tab === 'kanban') {
+        document.getElementById('kanbanView').classList.add('active');
+        document.getElementById('currentViewTitle').textContent = 'Kanban Board';
+      } else if (tab === 'team') {
+        document.getElementById('teamView').classList.add('active');
+        document.getElementById('currentViewTitle').textContent = 'Team Overview';
+      }
+    }
+
+    function logout() {
+      STATE = { user: null, projects: [], tasks: [], team: [] };
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('loginUserId').value = '';
+      document.getElementById('loginPin').value = '';
     }
 
     function showLoading(show, text = "") {
       const overlay = document.getElementById('loadingOverlay');
-      const textElem = document.getElementById('loadingText');
-      if (text) textElem.textContent = text;
+      if (text) document.getElementById('loadingText').textContent = text;
       overlay.style.display = show ? 'flex' : 'none';
     }
   </script>
