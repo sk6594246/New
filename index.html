@@ -600,6 +600,7 @@ html, body {
 <!-- Build-time secret injection placeholder -->
 <meta name="stratega-webapp-url" content="https://script.google.com/macros/s/AKfycbxsyBXNDDGA3Pwo6KzMfmw4kn2KBG6dewKA8i5UqbpDWqIiY43-2FHBzjMoeT6kwyOP6A/exec">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -1009,8 +1010,14 @@ const App = {
   data: { users: [], projects: [], departments: [], statuses: [], priorities: [], tasks: [], comments: [], auditLogs: [], automationRules: [] }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-  loadFromStorage(); seedIfEmpty(); setupPinPad(); updateSyncStatus(); renderAll();
+document.addEventListener('DOMContentLoaded', async () => {
+  loadFromStorage();
+  // If Google Sheets is configured, try to fetch existing data before seeding
+  const hasRemoteData = await fetchFromGoogleSheets();
+  if (!hasRemoteData) {
+    seedIfEmpty();
+  }
+  setupPinPad(); updateSyncStatus(); renderAll();
   const savedFav = localStorage.getItem('stratega_favicon');
   if (savedFav) applyFavicon(savedFav);
 });
@@ -1063,8 +1070,80 @@ function saveToStorage() {
   localStorage.setItem('stratega_config', JSON.stringify(configToSave));
 }
 
+/**
+ * Fetch existing data from Google Sheets on startup.
+ * Returns true if data was successfully loaded, false otherwise.
+ */
+async function fetchFromGoogleSheets() {
+  const url = App.config.gsheetUrl;
+  if (!url || url.includes('STRATEGA_WEBAPP_URL')) {
+    console.log('No Google Sheets URL configured, skipping remote fetch');
+    return false;
+  }
+
+  try {
+    showToast('Checking for existing data...', 'info');
+    const response = await fetch(url + '?action=getData&sheetId=' + encodeURIComponent(App.config.sheetId || ''), {
+      method: 'GET',
+      redirect: 'follow'
+    });
+
+    if (!response.ok) {
+      console.log('Remote fetch failed with status:', response.status);
+      return false;
+    }
+
+    const result = await response.json();
+
+    if (!result.success || !result.data) {
+      console.log('Remote fetch returned no data:', result.error || 'Unknown');
+      return false;
+    }
+
+    const remoteData = result.data;
+
+    // Validate that the remote data has actual content (not just empty arrays)
+    const hasTasks = remoteData.tasks && remoteData.tasks.length > 0;
+    const hasUsers = remoteData.users && remoteData.users.length > 0;
+    const hasProjects = remoteData.projects && remoteData.projects.length > 0;
+
+    if (!hasTasks && !hasUsers && !hasProjects) {
+      console.log('Remote data is empty, will seed defaults');
+      return false;
+    }
+
+    // Merge remote data into App.data, preserving structure
+    App.data.users = remoteData.users || App.data.users;
+    App.data.projects = remoteData.projects || App.data.projects;
+    App.data.departments = remoteData.departments || App.data.departments;
+    App.data.statuses = remoteData.statuses || App.data.statuses;
+    App.data.priorities = remoteData.priorities || App.data.priorities;
+    App.data.tasks = remoteData.tasks || App.data.tasks;
+    App.data.comments = remoteData.comments || App.data.comments;
+    App.data.auditLogs = remoteData.auditLogs || App.data.auditLogs;
+    App.data.automationRules = remoteData.automationRules || App.data.automationRules;
+
+    // Mark as seeded so we don't overwrite with demo data later
+    localStorage.setItem('stratega_seeded', 'true');
+    saveToStorage();
+
+    showToast('Loaded data from Google Sheets', 'success');
+    console.log('Remote data loaded successfully');
+    return true;
+
+  } catch (error) {
+    console.log('Error fetching from Google Sheets:', error.message);
+    // Don't show error toast here — silent fail is better on startup
+    return false;
+  }
+}
+
 function seedIfEmpty() {
+  // Never seed if we already have data locally
   if (App.data.statuses.length > 0) return;
+  // Never seed if we've already seeded before (prevents accidental re-seeding)
+  if (localStorage.getItem('stratega_seeded') === 'true') return;
+
   App.data.statuses = [
     { id: 1, name: 'Todo', color: '#78909c', sort_order: 0 },
     { id: 2, name: 'In Progress', color: '#4fc3f7', sort_order: 1 },
@@ -1124,6 +1203,8 @@ function seedIfEmpty() {
     { id: 1, source_field: 'status_id', trigger_value: '4', target_field: 'complete', target_value: 'true' },
     { id: 2, source_field: 'complete', trigger_value: 'true', target_field: 'actual_finish', target_value: 'TODAY' }
   ];
+  // Mark that we've seeded demo data, so we never do it again automatically
+  localStorage.setItem('stratega_seeded', 'true');
   saveToStorage();
 }
 
@@ -1999,6 +2080,7 @@ function importData(input) {
 function resetData() {
   if (!confirm('Reset all data to demo data? This cannot be undone.')) return;
   localStorage.removeItem('stratega_data');
+  localStorage.removeItem('stratega_seeded'); // Allow re-seeding
   App.data = { users: [], projects: [], departments: [], statuses: [], priorities: [], tasks: [], comments: [], auditLogs: [], automationRules: [] };
   seedIfEmpty(); renderAll();
   showToast('Data reset to demo', 'success');
