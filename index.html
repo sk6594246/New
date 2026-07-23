@@ -598,7 +598,7 @@ html, body {
 <link rel="apple-touch-icon" href="favicon.png">
 <meta name="theme-color" content="#0f172a">
 <!-- Build-time secret injection placeholder -->
-<meta name="stratega-webapp-url" content="https://script.google.com/macros/s/AKfycby2xqxLAYtCNjAiQrqABVkyUcT7mMa7T3UZLdQcH7cRHAw84R41YVyMSGtxZaaY52WPmQ/exec">
+<meta name="stratega-webapp-url" content="https://script.google.com/macros/s/AKfycbxCfHsoF6l75Z7_ZfntxX6jEd914SbjheX0CQ1tSidQ9rxfGz-N58q-Ewl6W6_q_gKP/exec">
 <base target="_blank">
 </head>
 <body>
@@ -1018,7 +1018,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function detectSecretUrl() {
   // Check if the URL was injected by GitHub Actions / build process
-  const injected = 'https://script.google.com/macros/s/AKfycby2xqxLAYtCNjAiQrqABVkyUcT7mMa7T3UZLdQcH7cRHAw84R41YVyMSGtxZaaY52WPmQ/exec';
+  const injected = 'https://script.google.com/macros/s/AKfycbxCfHsoF6l75Z7_ZfntxX6jEd914SbjheX0CQ1tSidQ9rxfGz-N58q-Ewl6W6_q_gKP/exec';
   if (injected && !injected.includes('STRATEGA_WEBAPP_URL')) {
     return injected;
   }
@@ -1185,7 +1185,7 @@ function navigateTo(view) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const navItem = document.querySelector('.nav-item[data-view="' + view + '"]');
   if (navItem) navItem.classList.add('active');
-  const titles = { dashboard: 'Dashboard', kanban: 'Kanban Board', gantt: 'Gantt Chart', team: 'Team Directory', analytics: 'Analytics', manage: 'Manage', config: 'Configuration' };
+  const titles = { dashboard: 'Dashboard', kanban: 'Kanban Board', gantt: 'Gantt Chart', team: 'Team Directory', analytics: 'Analytics', manage: 'Manage'  }; /* , config: 'Configuration' };  */
   document.getElementById('pageTitle').textContent = titles[view] || view;
   document.getElementById('newTaskBtn').style.display = (view === 'kanban' || view === 'gantt') ? 'inline-flex' : 'none';
   renderAll();
